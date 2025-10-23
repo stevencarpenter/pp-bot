@@ -1,0 +1,20 @@
+{
+  "name": "pp-bot",
+  "version": "1.0.0",
+  "description": "A Slack bot that manages a leaderboard of users with ++ and -- voting",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest"
+  },
+  "keywords": ["slack", "bot", "leaderboard"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@slack/bolt": "^3.14.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
