@@ -1,0 +1,7 @@
+Fix database connection timeout in Railway deployment
+- Increase connection timeout from 5s to 20s for cloud environments
+- Add exponential backoff retry logic (15 attempts, 2s initial delay)  
+- Wait for database connection before starting Slack app
+- Add test coverage for retry logic
+- Add comprehensive documentation
+Fixes container startup failures with ETIMEDOUT errors

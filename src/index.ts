@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { App, LogLevel } from '@slack/bolt';
 import { parseVote } from './utils/vote';
 import { getTopUsers, getUserScore, recordVote, updateUserScore } from './storage/database';
+import { waitForDatabase } from './db';
 
 dotenv.config();
 
@@ -108,6 +109,11 @@ export function createApp() {
 
 export async function start() {
   try {
+    // Wait for database to be ready before starting the app
+    console.log('Waiting for database connection...');
+    await waitForDatabase(15, 2000); // 15 retries with 2s initial delay
+    console.log('Database is ready');
+
     const app = createApp();
     const port = process.env.PORT || process.env.RAILWAY_PORT || 3000;
     await app.start(port);
