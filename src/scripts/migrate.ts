@@ -2,16 +2,22 @@
 import {Client} from 'pg';
 import logger from '../logger';
 
-async function migrate() {
+async function migrate(poolOverride?: any) {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
         logger.error('DATABASE_URL not set. Aborting migrations.');
         process.exit(1);
     }
 
-    // Support in-memory pg-mem for tests
+    // Use provided pool for testing, or create a new client
     let client: any;
-    if (connectionString.startsWith('pgmem://')) {
+    let shouldCloseClient = true;
+    
+    if (poolOverride) {
+        // For testing: use the shared pool directly (no client closing)
+        client = poolOverride;
+        shouldCloseClient = false;
+    } else if (connectionString.startsWith('pgmem://')) {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const {newDb} = require('pg-mem');
         const db = newDb();
@@ -87,7 +93,10 @@ async function migrate() {
     const maxAttempts = 10;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-            await client.connect();
+            // Only connect if we need to (not using poolOverride)
+            if (shouldCloseClient) {
+                await client.connect();
+            }
             break;
         } catch (e: any) {
             if (attempt === maxAttempts) {
@@ -110,7 +119,9 @@ async function migrate() {
         logger.error('Migration failed:', e);
         process.exitCode = 1;
     } finally {
-        await client.end();
+        if (shouldCloseClient) {
+            await client.end();
+        }
     }
 }
 

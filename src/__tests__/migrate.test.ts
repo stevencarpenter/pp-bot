@@ -8,7 +8,7 @@ const migrate = require('../scripts/migrate').default;
 
 describe('migration script', () => {
   test('executes without throwing and creates tables', async () => {
-    await migrate();
+    await migrate(pool); // Pass the shared pool instance
     // Basic existence checks
     await expect(pool.query('SELECT * FROM leaderboard')).resolves.toBeTruthy();
     await expect(pool.query('SELECT * FROM vote_history')).resolves.toBeTruthy();
