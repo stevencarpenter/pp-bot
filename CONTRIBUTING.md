@@ -1,6 +1,7 @@
 # Contributing to pp-bot
 
-Thank you for your interest in contributing to pp-bot! This document provides guidelines and information to help you contribute effectively.
+Thank you for your interest in contributing to pp-bot! This document provides guidelines and information to help you
+contribute effectively.
 
 ## Project Structure
 
@@ -84,6 +85,7 @@ const regex = /<@([A-Z0-9]+)>\s*(\+\+|--)/g;
 ```
 
 If you need to change how votes are detected:
+
 1. Update the regex pattern
 2. Add tests covering the new pattern
 3. Update EXAMPLES.md with new usage examples
@@ -118,6 +120,7 @@ To test your changes with a real Slack workspace:
 ## Questions?
 
 If you have questions or need help:
+
 - Open an issue on GitHub
 - Check existing issues and documentation
 - Review the code comments

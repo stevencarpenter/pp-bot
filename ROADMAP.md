@@ -1,4 +1,3 @@
-
 # pp-bot Development Roadmap
 
 **Last Updated:** October 23, 2025  
@@ -10,7 +9,8 @@
 
 ## Executive Summary
 
-This roadmap outlines the transformation of pp-bot from a functional JavaScript prototype into a production-ready TypeScript application deployed on Railway.com with comprehensive CI/CD, monitoring, and enhanced features.
+This roadmap outlines the transformation of pp-bot from a functional JavaScript prototype into a production-ready
+TypeScript application deployed on Railway.com with comprehensive CI/CD, monitoring, and enhanced features.
 
 ### Project Phases
 
@@ -34,23 +34,27 @@ This roadmap outlines the transformation of pp-bot from a functional JavaScript 
 ### Milestone 1: Foundation Setup
 
 #### Issue #1: Slack App Setup Instructions
+
 **Status:** 📋 Planned  
 **Priority:** High  
 **Estimated Effort:** 4-6 hours
 
 **Objectives:**
+
 - Document OAuth scopes and permissions
 - Create step-by-step setup guide
 - Add troubleshooting section
 - Include security best practices
 
 **Deliverables:**
+
 - [ ] Comprehensive Slack App documentation
 - [ ] Token obtainment guide
 - [ ] Permission configuration checklist
 - [ ] Troubleshooting guide
 
 **Success Criteria:**
+
 - New team members can set up Slack App independently
 - All required permissions documented
 - Security best practices followed
@@ -58,17 +62,20 @@ This roadmap outlines the transformation of pp-bot from a functional JavaScript 
 ---
 
 #### Issue #2: PostgreSQL Database Schema and Integration
+
 **Status:** 📋 Planned  
 **Priority:** Critical  
 **Estimated Effort:** 8-12 hours
 
 **Objectives:**
+
 - Design production database schema
 - Replace file-based storage with PostgreSQL
 - Add migration scripts
 - Implement connection pooling
 
 **Technical Tasks:**
+
 - [ ] Create `leaderboard` table schema
 - [ ] Create `vote_history` table (optional)
 - [ ] Implement database connection module
@@ -77,18 +84,21 @@ This roadmap outlines the transformation of pp-bot from a functional JavaScript 
 - [ ] Add database tests
 
 **Schema Design:**
+
 ```sql
-CREATE TABLE leaderboard (
-  user_id VARCHAR(20) PRIMARY KEY,
-  score INTEGER DEFAULT 0,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+CREATE TABLE leaderboard
+(
+    user_id    VARCHAR(20) PRIMARY KEY,
+    score      INTEGER   DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_leaderboard_score ON leaderboard(score DESC);
+CREATE INDEX idx_leaderboard_score ON leaderboard (score DESC);
 ```
 
 **Success Criteria:**
+
 - All data persists in PostgreSQL
 - Concurrent access works correctly
 - Migration from JSON to PostgreSQL successful
@@ -105,17 +115,20 @@ CREATE INDEX idx_leaderboard_score ON leaderboard(score DESC);
 ### Milestone 2: Production Ready
 
 #### Issue #3: Migrate to TypeScript
+
 **Status:** 📋 Planned  
 **Priority:** High  
 **Estimated Effort:** 12-16 hours
 
 **Objectives:**
+
 - Migrate JavaScript codebase to TypeScript
 - Add type definitions
 - Configure TypeScript compilation
 - Update build pipeline
 
 **Technical Tasks:**
+
 - [ ] Install TypeScript dependencies
 - [ ] Create `tsconfig.json`
 - [ ] Define interfaces and types
@@ -125,6 +138,7 @@ CREATE INDEX idx_leaderboard_score ON leaderboard(score DESC);
 - [ ] Configure Jest for TypeScript
 
 **Success Criteria:**
+
 - All code in TypeScript
 - Zero type errors
 - Tests pass with TypeScript
@@ -136,17 +150,20 @@ CREATE INDEX idx_leaderboard_score ON leaderboard(score DESC);
 ---
 
 #### Issue #4: Railway.com Deployment Configuration
+
 **Status:** 📋 Planned  
 **Priority:** Critical  
 **Estimated Effort:** 6-8 hours
 
 **Objectives:**
+
 - Configure Railway.com deployment
 - Set up PostgreSQL addon
 - Configure environment variables
 - Enable automatic deployments
 
 **Technical Tasks:**
+
 - [ ] Create Railway.com project
 - [ ] Connect GitHub repository
 - [ ] Add PostgreSQL database
@@ -156,6 +173,7 @@ CREATE INDEX idx_leaderboard_score ON leaderboard(score DESC);
 - [ ] Test deployment
 
 **Configuration:**
+
 ```toml
 [deploy]
 startCommand = "npm start"
@@ -165,6 +183,7 @@ restartPolicyType = "ON_FAILURE"
 ```
 
 **Success Criteria:**
+
 - Bot deploys successfully to Railway
 - PostgreSQL connected and working
 - Automatic deployments on push to main
@@ -176,17 +195,20 @@ restartPolicyType = "ON_FAILURE"
 ---
 
 #### Issue #5: GitHub Actions CI/CD Workflow
+
 **Status:** 📋 Planned  
 **Priority:** High  
 **Estimated Effort:** 4-6 hours
 
 **Objectives:**
+
 - Set up CI pipeline for testing
 - Set up CD pipeline for deployment
 - Configure branch protection
 - Add status badges
 
 **Technical Tasks:**
+
 - [ ] Create `.github/workflows/ci.yml`
 - [ ] Create `.github/workflows/deploy.yml`
 - [ ] Configure test automation
@@ -195,6 +217,7 @@ restartPolicyType = "ON_FAILURE"
 - [ ] Add status badges to README
 
 **Success Criteria:**
+
 - Tests run on every PR
 - Automatic deployment to Railway on main
 - Branch protection enforced
@@ -206,22 +229,26 @@ restartPolicyType = "ON_FAILURE"
 ---
 
 #### Issue #7: Add Health Check Endpoint
+
 **Status:** 📋 Planned  
 **Priority:** High  
 **Estimated Effort:** 2-4 hours
 
 **Objectives:**
+
 - Implement liveness probe
 - Implement readiness probe
 - Integrate with Railway health checks
 - Add graceful shutdown
 
 **Endpoints:**
+
 - `GET /health` - Liveness probe
 - `GET /ready` - Readiness probe
 - `GET /metrics` - System metrics
 
 **Success Criteria:**
+
 - Health endpoints return correct status
 - Railway uses health checks
 - Graceful shutdown on SIGTERM
@@ -230,17 +257,20 @@ restartPolicyType = "ON_FAILURE"
 ---
 
 #### Issue #8: Production Logging and Monitoring
+
 **Status:** 📋 Planned  
 **Priority:** High  
 **Estimated Effort:** 6-8 hours
 
 **Objectives:**
+
 - Replace console.log with Winston
 - Set up Sentry error tracking
 - Add custom metrics
 - Configure alerting
 
 **Technical Tasks:**
+
 - [ ] Install Winston logger
 - [ ] Configure structured logging
 - [ ] Set up Sentry account and integration
@@ -249,6 +279,7 @@ restartPolicyType = "ON_FAILURE"
 - [ ] Document monitoring
 
 **Success Criteria:**
+
 - Structured JSON logging in production
 - Sentry captures and reports errors
 - Custom metrics tracked
@@ -258,17 +289,20 @@ restartPolicyType = "ON_FAILURE"
 ---
 
 #### Issue #9: Environment Variable Management
+
 **Status:** 📋 Planned  
 **Priority:** Medium  
 **Estimated Effort:** 3-4 hours
 
 **Objectives:**
+
 - Validate environment variables
 - Document all variables
 - Support multi-environment configs
 - Implement secrets rotation guide
 
 **Technical Tasks:**
+
 - [ ] Create environment validator
 - [ ] Update `.env.example` with docs
 - [ ] Support `.env.development`, `.env.production`
@@ -276,6 +310,7 @@ restartPolicyType = "ON_FAILURE"
 - [ ] Create secrets rotation guide
 
 **Success Criteria:**
+
 - All env vars validated on startup
 - Comprehensive documentation
 - Multi-environment support
@@ -290,23 +325,27 @@ restartPolicyType = "ON_FAILURE"
 ### Milestone 3: Feature Complete
 
 #### Issue #6: Add Leaderboard Viewing Command
+
 **Status:** 📋 Planned  
 **Priority:** Medium  
 **Estimated Effort:** 6-8 hours
 
 **Objectives:**
+
 - Enhance `/leaderboard` with pagination
 - Add filtering options
 - Improve formatting with Slack blocks
 - Add `/score` command for users
 
 **Features:**
+
 - Pagination (Next/Previous buttons)
 - Time filters (today, week, month, all-time)
 - Interactive Slack components
 - Individual user statistics
 
 **Success Criteria:**
+
 - Pagination works correctly
 - Filters work as expected
 - Interactive components functional
@@ -318,17 +357,20 @@ restartPolicyType = "ON_FAILURE"
 ---
 
 #### Issue #10: Testing and Coverage Improvements
+
 **Status:** 📋 Planned  
 **Priority:** High  
 **Estimated Effort:** 8-10 hours
 
 **Objectives:**
+
 - Expand test coverage to > 80%
 - Add integration tests
 - Add E2E tests
 - Set up coverage reporting
 
 **Technical Tasks:**
+
 - [ ] Configure test infrastructure
 - [ ] Write unit tests for all functions
 - [ ] Write integration tests for database
@@ -337,6 +379,7 @@ restartPolicyType = "ON_FAILURE"
 - [ ] Enforce coverage thresholds in CI
 
 **Success Criteria:**
+
 - > 80% code coverage
 - All critical paths tested
 - Integration tests passing
@@ -352,6 +395,7 @@ restartPolicyType = "ON_FAILURE"
 **Recommendation:** TypeScript (51/55 score)
 
 **Rationale:**
+
 - Minimal migration effort from JavaScript
 - Excellent Slack SDK support
 - Strong type safety
@@ -360,6 +404,7 @@ restartPolicyType = "ON_FAILURE"
 - Easy hiring and onboarding
 
 **Alternative Considerations:**
+
 - **Python:** Good for data processing, but more migration effort
 - **Scala:** Overkill for this use case
 - **Rust:** Excellent performance, but very high learning curve
@@ -371,6 +416,7 @@ See `TECH_DECISION.md` for full analysis.
 ## Deployment Architecture
 
 ### Current (v1.0)
+
 ```
 Local Machine
 ├── Node.js application
@@ -378,6 +424,7 @@ Local Machine
 ```
 
 ### Target (v2.0)
+
 ```
 Railway.com
 ├── Node.js/TypeScript application
@@ -400,6 +447,7 @@ Monitoring
 ## Database Schema Evolution
 
 ### v1.0 (Current)
+
 ```json
 // leaderboard.json
 {
@@ -409,31 +457,36 @@ Monitoring
 ```
 
 ### v1.5 (Foundation)
+
 ```sql
 -- Basic schema
-CREATE TABLE leaderboard (
-  user_id VARCHAR(20) PRIMARY KEY,
-  score INTEGER DEFAULT 0
+CREATE TABLE leaderboard
+(
+    user_id VARCHAR(20) PRIMARY KEY,
+    score   INTEGER DEFAULT 0
 );
 ```
 
 ### v2.0 (Production)
+
 ```sql
 -- Full schema with history
-CREATE TABLE leaderboard (
-  user_id VARCHAR(20) PRIMARY KEY,
-  score INTEGER DEFAULT 0,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+CREATE TABLE leaderboard
+(
+    user_id    VARCHAR(20) PRIMARY KEY,
+    score      INTEGER   DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE vote_history (
-  id SERIAL PRIMARY KEY,
-  voter_id VARCHAR(20) NOT NULL,
-  voted_user_id VARCHAR(20) NOT NULL,
-  vote_type VARCHAR(2) NOT NULL,
-  channel_id VARCHAR(20),
-  created_at TIMESTAMP DEFAULT NOW()
+CREATE TABLE vote_history
+(
+    id            SERIAL PRIMARY KEY,
+    voter_id      VARCHAR(20) NOT NULL,
+    voted_user_id VARCHAR(20) NOT NULL,
+    vote_type     VARCHAR(2)  NOT NULL,
+    channel_id    VARCHAR(20),
+    created_at    TIMESTAMP DEFAULT NOW()
 );
 ```
 
@@ -442,17 +495,20 @@ CREATE TABLE vote_history (
 ## Performance Targets
 
 ### Response Times (p95)
+
 - Vote processing: < 100ms
 - `/leaderboard` command: < 200ms
 - `/score` command: < 100ms
 - Database queries: < 50ms
 
 ### Availability
+
 - Uptime: > 99.5%
 - Zero-downtime deployments
 - Automatic restart on failure
 
 ### Scalability
+
 - Handle 1000+ votes per day
 - Support 100+ concurrent users
 - Database connection pooling
@@ -463,21 +519,23 @@ CREATE TABLE vote_history (
 
 ### High-Risk Items
 
-| Risk | Impact | Mitigation | Owner |
-|------|--------|----------|-------|
-| Data loss during migration | High | Backup JSON data, test migration | Dev Team |
-| Railway.com costs exceed budget | Medium | Monitor usage, optimize queries | PM |
-| TypeScript migration breaks functionality | High | Comprehensive testing, gradual migration | Dev Team |
-| Slack API rate limits | Medium | Implement rate limiting, caching | Dev Team |
+| Risk                                      | Impact | Mitigation                               | Owner    |
+|-------------------------------------------|--------|------------------------------------------|----------|
+| Data loss during migration                | High   | Backup JSON data, test migration         | Dev Team |
+| Railway.com costs exceed budget           | Medium | Monitor usage, optimize queries          | PM       |
+| TypeScript migration breaks functionality | High   | Comprehensive testing, gradual migration | Dev Team |
+| Slack API rate limits                     | Medium | Implement rate limiting, caching         | Dev Team |
 
 ### Contingency Plans
 
 **If TypeScript migration is too complex:**
+
 - Document decision to stay with JavaScript
 - Implement strict linting rules
 - Add JSDoc comments for type hints
 
 **If Railway.com is too expensive:**
+
 - Consider alternative platforms (Render.com, Fly.io)
 - Optimize database usage
 - Implement caching layer
@@ -487,6 +545,7 @@ CREATE TABLE vote_history (
 ## Success Metrics
 
 ### Technical Metrics
+
 - Code coverage: > 80%
 - Test pass rate: 100%
 - Build time: < 5 minutes
@@ -494,6 +553,7 @@ CREATE TABLE vote_history (
 - Zero critical bugs in production
 
 ### Business Metrics
+
 - User satisfaction: > 4.5/5
 - System uptime: > 99.5%
 - Response time: < 200ms p95
@@ -504,6 +564,7 @@ CREATE TABLE vote_history (
 ## Post-Launch Enhancements (v3.0+)
 
 ### Future Features
+
 - Export leaderboard to CSV/JSON
 - Schedule automatic leaderboard posts
 - Gamification (achievements, badges)
@@ -513,6 +574,7 @@ CREATE TABLE vote_history (
 - ML-powered insights
 
 ### Technical Improvements
+
 - Redis caching layer
 - GraphQL API
 - Real-time updates with WebSockets
@@ -600,17 +662,20 @@ Week 7+: Polish & Launch
 ## Changelog
 
 ### v1.0 (October 2025)
+
 - Initial JavaScript prototype
 - File-based storage
 - Basic voting and leaderboard functionality
 - Socket Mode integration
 
 ### v1.5 (Planned - November 2025)
+
 - PostgreSQL database integration
 - Railway.com deployment
 - Basic health checks
 
 ### v2.0 (Planned - December 2025)
+
 - TypeScript migration
 - Full CI/CD pipeline
 - Production logging and monitoring
@@ -620,6 +685,7 @@ Week 7+: Polish & Launch
 ---
 
 **Next Steps:**
+
 1. Review and approve this roadmap
 2. Create GitHub issues from templates
 3. Create milestones and assign issues

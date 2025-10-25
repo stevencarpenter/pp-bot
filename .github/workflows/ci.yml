@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: ppbot
+          POSTGRES_PASSWORD: ppbot
+          POSTGRES_DB: ppbot
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ppbot" --health-interval=5s --health-timeout=5s --health-retries=10
+    env:
+      CI: true
+      DATABASE_URL: postgresql://ppbot:ppbot@localhost:5432/ppbot
+      LOG_LEVEL: info
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Lint
+        run: npm run lint
+      - name: Unit Tests
+        run: npm test -- --maxWorkers=2
+      - name: Coverage
+        run: npm run test:coverage -- --maxWorkers=2
+      - name: DB Migrate
+        run: npm run migrate
+      - name: Integration Test
+        run: DATABASE_URL=$DATABASE_URL jest src/__tests__/db.integration.test.ts --runInBand --verbose
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info

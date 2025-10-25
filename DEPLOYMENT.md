@@ -25,18 +25,21 @@
 ## Prerequisites
 
 ### Required Accounts
+
 - GitHub account with access to stevencarpenter/pp-bot repository
 - Railway.com account (sign up at https://railway.app)
 - Slack workspace with admin access
 - Slack App created and configured (see Issue #1)
 
 ### Required Tokens/Credentials
+
 - `SLACK_BOT_TOKEN` (starts with `xoxb-`)
 - `SLACK_APP_TOKEN` (starts with `xapp-`)
 - `SLACK_SIGNING_SECRET` (32-character hex string)
 - Railway.com API token (for CLI deployment)
 
 ### Local Setup
+
 ```bash
 # Clone repository
 git clone https://github.com/stevencarpenter/pp-bot.git
@@ -59,34 +62,37 @@ railway login
 ### Step 1: Create New Project
 
 1. **Navigate to Railway Dashboard**
-   - Go to https://railway.app
-   - Click "New Project"
+    - Go to https://railway.app
+    - Click "New Project"
 
 2. **Connect GitHub Repository**
-   - Select "Deploy from GitHub repo"
-   - Authorize Railway to access your GitHub
-   - Select `stevencarpenter/pp-bot` repository
+    - Select "Deploy from GitHub repo"
+    - Authorize Railway to access your GitHub
+    - Select `stevencarpenter/pp-bot` repository
 
 3. **Configure Initial Settings**
-   - Project name: `pp-bot-production`
-   - Environment: `production`
-   - Branch: `main`
+    - Project name: `pp-bot-production`
+    - Environment: `production`
+    - Branch: `main`
 
 ### Step 2: Configure Build Settings
 
 Railway will auto-detect Node.js. Verify settings:
 
 **Build Command:**
+
 ```bash
 npm ci && npm run build
 ```
 
 **Start Command:**
+
 ```bash
 npm start
 ```
 
 **Node Version:**
+
 ```
 20.x
 ```
@@ -126,27 +132,65 @@ NODE_ENV = "production"
 ### Step 2: Create Database Schema
 
 ```sql
-CREATE TABLE IF NOT EXISTS leaderboard (
-  user_id VARCHAR(20) PRIMARY KEY,
-  score INTEGER DEFAULT 0 NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
+CREATE TABLE IF NOT EXISTS leaderboard
+(
+    user_id
+    VARCHAR
+(
+    20
+) PRIMARY KEY,
+    score INTEGER DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW
+(
+),
+    updated_at TIMESTAMP DEFAULT NOW
+(
+)
+    );
 
-CREATE INDEX idx_leaderboard_score ON leaderboard(score DESC);
+CREATE INDEX idx_leaderboard_score ON leaderboard (score DESC);
 
-CREATE TABLE IF NOT EXISTS vote_history (
-  id SERIAL PRIMARY KEY,
-  voter_id VARCHAR(20) NOT NULL,
-  voted_user_id VARCHAR(20) NOT NULL,
-  vote_type VARCHAR(2) NOT NULL CHECK (vote_type IN ('++', '--')),
-  channel_id VARCHAR(20),
-  message_ts VARCHAR(20),
-  created_at TIMESTAMP DEFAULT NOW()
-);
+CREATE TABLE IF NOT EXISTS vote_history
+(
+    id
+    SERIAL
+    PRIMARY
+    KEY,
+    voter_id
+    VARCHAR
+(
+    20
+) NOT NULL,
+    voted_user_id VARCHAR
+(
+    20
+) NOT NULL,
+    vote_type VARCHAR
+(
+    2
+) NOT NULL CHECK
+(
+    vote_type
+    IN
+(
+    '++',
+    '--'
+)),
+    channel_id VARCHAR
+(
+    20
+),
+    message_ts VARCHAR
+(
+    20
+),
+    created_at TIMESTAMP DEFAULT NOW
+(
+)
+    );
 
-CREATE INDEX idx_vote_history_user ON vote_history(voted_user_id);
-CREATE INDEX idx_vote_history_created ON vote_history(created_at DESC);
+CREATE INDEX idx_vote_history_user ON vote_history (voted_user_id);
+CREATE INDEX idx_vote_history_created ON vote_history (created_at DESC);
 ```
 
 ---
@@ -205,6 +249,7 @@ curl https://pp-bot-production.up.railway.app/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ok",
@@ -236,6 +281,7 @@ railway logs | grep ERROR
 ### Set Up Uptime Monitoring
 
 Use services like:
+
 - UptimeRobot (free)
 - Better Uptime
 - Pingdom
@@ -249,6 +295,7 @@ Monitor: `https://pp-bot-production.up.railway.app/health`
 ### Common Issues
 
 **Database Connection Failed:**
+
 ```bash
 # Verify DATABASE_URL
 railway variables | grep DATABASE_URL
@@ -258,6 +305,7 @@ railway run psql $DATABASE_URL -c "SELECT 1"
 ```
 
 **Bot Not Responding:**
+
 - Verify Slack tokens are correct
 - Check bot has required permissions
 - Verify Socket Mode is enabled
@@ -268,6 +316,7 @@ railway run psql $DATABASE_URL -c "SELECT 1"
 ## Cost Optimization
 
 ### Railway Free Tier
+
 - $5 credit per month
 - ~500 MB RAM
 - Optimize connection pool: `DATABASE_POOL_SIZE=5`
@@ -286,11 +335,13 @@ Or check Dashboard → Billing → Usage
 ## Rollback Procedures
 
 ### Via Dashboard
+
 1. Go to Deployments tab
 2. Select previous deployment
 3. Click "Rollback"
 
 ### Via CLI
+
 ```bash
 railway deployments
 railway rollback <deployment-id>
