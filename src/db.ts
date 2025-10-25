@@ -108,9 +108,7 @@ export async function waitForDatabase(maxRetries = 10, delayMs = 1000): Promise<
       }
     } catch (err) {
       const error = err as Error;
-      logger.warn(
-        `Database connection attempt ${attempt}/${maxRetries} failed: ${error.message}`
-      );
+      logger.warn(`Database connection attempt ${attempt}/${maxRetries} failed: ${error.message}`);
 
       if (attempt === maxRetries) {
         logger.error('✗ Failed to connect to database after maximum retries');

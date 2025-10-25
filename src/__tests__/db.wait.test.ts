@@ -26,4 +26,3 @@ describe('waitForDatabase', () => {
     await expect(waitForDatabase()).resolves.toBeUndefined();
   });
 });
-

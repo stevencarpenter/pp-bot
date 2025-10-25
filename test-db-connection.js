@@ -25,9 +25,7 @@ async function simulateWaitForDatabase(maxRetries = 15, delayMs = 2000) {
 
     if (attempt === maxRetries) {
       console.error('✗ Failed to connect to database after maximum retries');
-      throw new Error(
-        `Failed to connect to database after ${maxRetries} attempts`
-      );
+      throw new Error(`Failed to connect to database after ${maxRetries} attempts`);
     }
 
     // Exponential backoff with jitter
@@ -55,4 +53,3 @@ simulateWaitForDatabase(15, 2000)
     console.log('App would exit with code 1');
     console.log('='.repeat(60));
   });
-
