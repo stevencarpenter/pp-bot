@@ -67,7 +67,7 @@ function createPool(): any {
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     max: 10,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 20000, // Increased from 5000 to 20000 for cloud environments
   });
   g.__ALL_POOLS__.push(p);
   return p;
@@ -78,5 +78,53 @@ export const pool: any = createPool();
 // Attach listeners for all pools (including ephemeral for testing)
 pool.on('connect', () => logger.info('✓ Database connection established'));
 pool.on('error', (err: unknown) => logger.error('✗ Unexpected database error:', err));
+
+/**
+ * Wait for database to be ready with retry logic
+ * @param maxRetries Maximum number of connection attempts
+ * @param delayMs Initial delay between retries in milliseconds
+ * @returns Promise that resolves when database is ready
+ */
+export async function waitForDatabase(maxRetries = 10, delayMs = 1000): Promise<void> {
+  // Skip wait for ephemeral test pools
+  if (pool._isEphemeral) {
+    logger.info('Using ephemeral test pool, skipping connection check');
+    return;
+  }
+
+  // Skip wait if no DATABASE_URL is set
+  if (!process.env.DATABASE_URL) {
+    logger.warn('No DATABASE_URL set, skipping connection check');
+    return;
+  }
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      logger.info(`Database connection attempt ${attempt}/${maxRetries}...`);
+      const result = await pool.query('SELECT 1');
+      if (result) {
+        logger.info('✓ Database connection successful');
+        return;
+      }
+    } catch (err) {
+      const error = err as Error;
+      logger.warn(
+        `Database connection attempt ${attempt}/${maxRetries} failed: ${error.message}`
+      );
+
+      if (attempt === maxRetries) {
+        logger.error('✗ Failed to connect to database after maximum retries');
+        throw new Error(
+          `Failed to connect to database after ${maxRetries} attempts: ${error.message}`
+        );
+      }
+
+      // Exponential backoff with jitter
+      const backoffDelay = delayMs * Math.pow(2, attempt - 1) + Math.random() * 1000;
+      logger.info(`Retrying in ${Math.round(backoffDelay)}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, backoffDelay));
+    }
+  }
+}
 
 export default pool as Pool;
