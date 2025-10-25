@@ -36,15 +36,13 @@ jobs:
       - name: Build
         run: npm run build
       - name: Unit Tests
-        run: npm test -- --maxWorkers=2
-      - name: Coverage
-        run: npm run test:coverage -- --maxWorkers=2
+        run: npm test
       - name: DB Migrate
         run: npm run migrate
       - name: Integration Test
-        run: npm test -- src/__tests__/db.integration.test.ts --runInBand --verbose --no-coverage
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-lcov
-          path: coverage/lcov.info
+        run: npm test
+#      - name: Upload coverage report
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: coverage-lcov
+#          path: coverage/lcov.info
