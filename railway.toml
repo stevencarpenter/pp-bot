@@ -1,6 +1,5 @@
 [build]
 builder = "RAILPACK"
-buildCommand = "npm ci --prefer-offline --no-audit && npm run build"
 
 [deploy]
 startCommand = "npm start"

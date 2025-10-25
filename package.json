@@ -4,7 +4,6 @@
   "description": "A Slack bot that manages a leaderboard of users with ++ and -- voting",
   "main": "index.js",
   "scripts": {
-    "build": "echo 'No build required for this project'",
     "start": "node index.js",
     "test": "jest"
   },
