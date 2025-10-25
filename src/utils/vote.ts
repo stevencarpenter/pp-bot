@@ -1,7 +1,7 @@
 import { Vote, VoteAction } from '../types';
 
 export function parseVote(text: string): Vote[] {
-  const regex = /<@([A-Z0-9]+)>\s*(\+\+|--)/g;
+  const regex = /<@([A-Za-z0-9]+)>\s*(\+\+|--)/g;
   const matches: Vote[] = [];
   let match: RegExpExecArray | null;
   while ((match = regex.exec(text)) !== null) {
