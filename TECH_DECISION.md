@@ -12,18 +12,18 @@
 
 **Recommendation: TypeScript** (Score: 51/55)
 
-After comprehensive analysis of JavaScript, TypeScript, Python, Scala, and Rust for the pp-bot Slack bot application, *
-*TypeScript emerges as the clear winner** with a score of 51 out of 55 possible points across all evaluation criteria.
+After comprehensive analysis of JavaScript, TypeScript, Python, Scala, and Rust for the pp-bot Slack bot application, \*
+\*TypeScript emerges as the clear winner\*\* with a score of 51 out of 55 possible points across all evaluation criteria.
 
 ### Key Findings
 
-| Language       | Score     | Recommendation                    |
-|----------------|-----------|-----------------------------------|
-| **TypeScript** | **51/55** | ⭐⭐⭐⭐⭐ **Strongly Recommended**    |
+| Language       | Score     | Recommendation                       |
+| -------------- | --------- | ------------------------------------ |
+| **TypeScript** | **51/55** | ⭐⭐⭐⭐⭐ **Strongly Recommended**  |
 | Python         | 45/55     | ⭐⭐⭐ Good for data-heavy use cases |
 | JavaScript     | 38/55     | ⭐⭐⭐ Adequate for prototyping only |
-| Rust           | 33/55     | ⭐⭐ Overkill for this application  |
-| Scala          | 31/55     | ⭐⭐ Not suited for this use case   |
+| Rust           | 33/55     | ⭐⭐ Overkill for this application   |
+| Scala          | 31/55     | ⭐⭐ Not suited for this use case    |
 
 ---
 
@@ -96,23 +96,23 @@ All languages were evaluated on 11 criteria, each scored 0-5:
 
 ```typescript
 interface Vote {
-    userId: string;
-    action: '++' | '--';
+  userId: string;
+  action: '++' | '--';
 }
 
 function parseVote(text: string): Vote[] {
-    const regex = /<@([A-Z0-9]+)>\s*(\+\+|--)/g;
-    const matches: Vote[] = [];
-    let match: RegExpExecArray | null;
+  const regex = /<@([A-Z0-9]+)>\s*(\+\+|--)/g;
+  const matches: Vote[] = [];
+  let match: RegExpExecArray | null;
 
-    while ((match = regex.exec(text)) !== null) {
-        matches.push({
-            userId: match[1],
-            action: match[2] as '++' | '--',
-        });
-    }
+  while ((match = regex.exec(text)) !== null) {
+    matches.push({
+      userId: match[1],
+      action: match[2] as '++' | '--',
+    });
+  }
 
-    return matches;
+  return matches;
 }
 ```
 
@@ -315,7 +315,7 @@ def handle_vote(message, say):
 ### Development Speed
 
 | Language   | Score | Time to Implement Feature |
-|------------|-------|---------------------------|
+| ---------- | ----- | ------------------------- |
 | JavaScript | 5/5   | 2-4 hours                 |
 | TypeScript | 4/5   | 3-5 hours                 |
 | Python     | 4/5   | 3-5 hours                 |
@@ -325,7 +325,7 @@ def handle_vote(message, say):
 ### Type Safety
 
 | Language   | Score | Error Detection |
-|------------|-------|-----------------|
+| ---------- | ----- | --------------- |
 | TypeScript | 5/5   | Compile-time    |
 | Rust       | 5/5   | Compile-time    |
 | Scala      | 5/5   | Compile-time    |
@@ -334,18 +334,18 @@ def handle_vote(message, say):
 
 ### Ecosystem & Support
 
-| Language   | npm Packages | Slack SDK  | Railway Support |
-|------------|--------------|------------|-----------------|
-| TypeScript | ✅ Full       | ✅ Official | ✅ Excellent     |
-| JavaScript | ✅ Full       | ✅ Official | ✅ Excellent     |
-| Python     | ❌ PyPI       | ✅ Official | ✅ Excellent     |
-| Scala      | ❌ Maven      | ❌ None     | ⚠️ Good         |
-| Rust       | ❌ Crates     | ❌ None     | ⚠️ Good         |
+| Language   | npm Packages | Slack SDK   | Railway Support |
+| ---------- | ------------ | ----------- | --------------- |
+| TypeScript | ✅ Full      | ✅ Official | ✅ Excellent    |
+| JavaScript | ✅ Full      | ✅ Official | ✅ Excellent    |
+| Python     | ❌ PyPI      | ✅ Official | ✅ Excellent    |
+| Scala      | ❌ Maven     | ❌ None     | ⚠️ Good         |
+| Rust       | ❌ Crates    | ❌ None     | ⚠️ Good         |
 
 ### Migration Effort
 
 | Language   | Time Required | Complexity | Risk      |
-|------------|---------------|------------|-----------|
+| ---------- | ------------- | ---------- | --------- |
 | TypeScript | 1-2 days      | Low        | Low       |
 | Python     | 3-5 days      | Medium     | Medium    |
 | Scala      | 1-2 weeks     | High       | High      |
@@ -377,13 +377,13 @@ def handle_vote(message, say):
 
 ### Language Fit
 
-| Language       | I/O Performance | Type Safety | Team Familiarity | Fit Score |
-|----------------|-----------------|-------------|------------------|-----------|
-| **TypeScript** | ✅ Excellent     | ✅ Excellent | ✅ High           | **9/10**  |
-| Python         | ⚠️ Good         | ⚠️ Good     | ⚠️ Medium        | 7/10      |
-| JavaScript     | ✅ Excellent     | ❌ Poor      | ✅ High           | 6/10      |
-| Rust           | ✅ Excellent     | ✅ Excellent | ❌ Low            | 4/10      |
-| Scala          | ✅ Excellent     | ✅ Excellent | ❌ Low            | 4/10      |
+| Language       | I/O Performance | Type Safety  | Team Familiarity | Fit Score |
+| -------------- | --------------- | ------------ | ---------------- | --------- |
+| **TypeScript** | ✅ Excellent    | ✅ Excellent | ✅ High          | **9/10**  |
+| Python         | ⚠️ Good         | ⚠️ Good      | ⚠️ Medium        | 7/10      |
+| JavaScript     | ✅ Excellent    | ❌ Poor      | ✅ High          | 6/10      |
+| Rust           | ✅ Excellent    | ✅ Excellent | ❌ Low           | 4/10      |
+| Scala          | ✅ Excellent    | ✅ Excellent | ❌ Low           | 4/10      |
 
 ---
 
@@ -392,7 +392,7 @@ def handle_vote(message, say):
 ### TypeScript Migration Risks
 
 | Risk                         | Likelihood | Impact | Mitigation                                       |
-|------------------------------|------------|--------|--------------------------------------------------|
+| ---------------------------- | ---------- | ------ | ------------------------------------------------ |
 | Type errors during migration | Medium     | Low    | Gradual migration, disable strict mode initially |
 | Build step adds complexity   | Low        | Low    | Well-documented build process                    |
 | Team unfamiliar with types   | Low        | Low    | TypeScript is easy to learn for JS developers    |
@@ -402,7 +402,7 @@ def handle_vote(message, say):
 ### Python Migration Risks
 
 | Risk                             | Likelihood | Impact | Mitigation                 |
-|----------------------------------|------------|--------|----------------------------|
+| -------------------------------- | ---------- | ------ | -------------------------- |
 | Complete rewrite introduces bugs | High       | High   | Comprehensive testing      |
 | Team unfamiliar with Python      | Medium     | Medium | Training, pair programming |
 | Performance issues               | Medium     | Medium | Profiling, optimization    |
@@ -412,7 +412,7 @@ def handle_vote(message, say):
 ### Rust/Scala Migration Risks
 
 | Risk                               | Likelihood | Impact    | Mitigation         |
-|------------------------------------|------------|-----------|--------------------|
+| ---------------------------------- | ---------- | --------- | ------------------ |
 | Extremely long migration time      | Very High  | Very High | Not feasible       |
 | Team cannot learn language quickly | Very High  | Very High | Extensive training |
 | No official Slack SDK              | Very High  | High      | Build from scratch |
@@ -428,7 +428,7 @@ def handle_vote(message, say):
 Assuming $100/hour developer rate:
 
 | Language   | Migration Time | Migration Cost | Annual Maintenance | 3-Year Total |
-|------------|----------------|----------------|--------------------|--------------|
+| ---------- | -------------- | -------------- | ------------------ | ------------ |
 | TypeScript | 16 hours       | $1,600         | $5,000/year        | $16,600      |
 | Python     | 50 hours       | $5,000         | $6,000/year        | $23,000      |
 | JavaScript | 0 hours        | $0             | $10,000/year       | $30,000      |
@@ -528,7 +528,7 @@ Assuming $100/hour developer rate:
 ### TypeScript Detailed Scores
 
 | Criterion         | Score | Justification                           |
-|-------------------|-------|-----------------------------------------|
+| ----------------- | ----- | --------------------------------------- |
 | Development Speed | 4/5   | Slightly slower than JS, but still fast |
 | Type Safety       | 5/5   | Excellent compile-time checking         |
 | Performance       | 3/5   | Same as JS, good for I/O                |
