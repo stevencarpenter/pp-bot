@@ -231,7 +231,7 @@ async function databaseOperation() {
 
 ### Migration Guide
 
-- Document breaking changes in MIGRATION.md
+- Document breaking changes in the README.md (or create MIGRATION.md if migration instructions grow)
 - Provide upgrade path for existing deployments
 - Include database schema changes
 
