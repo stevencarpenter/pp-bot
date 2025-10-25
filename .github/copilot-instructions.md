@@ -227,7 +227,7 @@ async function databaseOperation() {
 
 - Document public APIs with JSDoc
 - Keep CONTRIBUTING.md updated with development practices
-- Update EXAMPLES.md when adding new voting patterns or commands
+- Add or update examples in README.md when adding new voting patterns or commands
 
 ### Migration Guide
 
