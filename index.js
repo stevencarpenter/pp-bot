@@ -71,10 +71,10 @@ function startBot() {
   console.log('SLACK_APP_TOKEN present:', !!process.env.SLACK_APP_TOKEN);
 
   if (!process.env.SLACK_BOT_TOKEN || !process.env.SLACK_SIGNING_SECRET || !process.env.SLACK_APP_TOKEN) {
-    console.error('❌ Missing required environment variables. Please set:');
-    console.error('  - SLACK_BOT_TOKEN');
-    console.error('  - SLACK_SIGNING_SECRET');
-    console.error('  - SLACK_APP_TOKEN');
+    console.error('❌ Missing required environment variables. Please set: SLACK_BOT_TOKEN, SLACK_SIGNING_SECRET, SLACK_APP_TOKEN');
+    // Provide a short dump of current env keys (filtered)
+    const exposed = Object.keys(process.env).filter(k => k.startsWith('SLACK_'));
+    console.log('Currently defined SLACK_* vars:', exposed);
     process.exit(1);
   }
 
@@ -85,37 +85,50 @@ function startBot() {
     appToken: process.env.SLACK_APP_TOKEN,
   });
 
+  // Add a simple health endpoint (even in Socket Mode) so the hosting platform sees a listening port
+  try {
+    if (app.receiver && app.receiver.app && app.receiver.app.get) {
+      app.receiver.app.get('/health', (_req, res) => {
+        res.status(200).send('ok');
+      });
+    }
+  } catch (e) {
+    console.warn('Could not register /health endpoint:', e.message);
+  }
+
+  // Verify tokens with Slack immediately for early failure visibility
+  (async () => {
+    try {
+      const auth = await app.client.auth.test();
+      console.log('✅ Slack auth test succeeded:', { team: auth.team, user: auth.user, bot_id: auth.bot_id });
+    } catch (e) {
+      console.error('❌ Slack auth test failed. Check tokens & scopes.', e.data || e.message);
+    }
+  })();
+
   // Listen for messages
   app.message(async ({ message, say }) => {
-    // Skip bot messages
-    if (message.subtype === 'bot_message' || message.bot_id) {
-      return;
-    }
-    
-    const text = message.text || '';
-    const votes = parseVote(text);
-    
-    if (votes.length > 0) {
+    try {
+      // Skip bot messages
+      if (message.subtype === 'bot_message' || message.bot_id) return;
+      const text = message.text || '';
+      const votes = parseVote(text);
+      if (votes.length === 0) return; // fast exit
       const leaderboard = loadLeaderboard();
       const results = [];
-      
       for (const vote of votes) {
-        // Don't allow users to vote for themselves
         if (vote.userId === message.user) {
           results.push(`<@${vote.userId}> cannot vote for themselves!`);
           continue;
         }
-        
         const newScore = updateLeaderboard(leaderboard, vote.userId, vote.action);
-        const action = vote.action === '++' ? 'increased' : 'decreased';
-        results.push(`<@${vote.userId}>'s score ${action} to ${newScore}`);
+        const actionWord = vote.action === '++' ? 'increased' : 'decreased';
+        results.push(`<@${vote.userId}>'s score ${actionWord} to ${newScore}`);
       }
-      
       saveLeaderboard(leaderboard);
-      
-      if (results.length > 0) {
-        await say(results.join('\n'));
-      }
+      if (results.length > 0) await say(results.join('\n'));
+    } catch (err) {
+      console.error('Error processing message event:', err);
     }
   });
 
@@ -153,11 +166,12 @@ function startBot() {
     await say(`<@${userId}>'s current score is ${score}`);
   });
 
-  // Start the app
+  // Start the app (bind explicit port so platform considers service healthy)
   (async () => {
     try {
-      await app.start();
-      console.log(`⚡️ Slack bot is running on Socket Mode!`);
+      const port = process.env.PORT || process.env.RAILWAY_PORT || 3000;
+      await app.start(port); // Even in Socket Mode this will spin up Express
+      console.log(`⚡️ Slack bot is running in Socket Mode with health server on port ${port}`);
     } catch (error) {
       console.error('Failed to start app:', error);
       process.exit(1);
