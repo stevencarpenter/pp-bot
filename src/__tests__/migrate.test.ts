@@ -1,5 +1,8 @@
-import migrate from '../scripts/migrate';
 import { pool } from '../db';
+
+// Import migrate function dynamically since it's a script file
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const migrate = require('../scripts/migrate').default;
 
 // Use pg-mem ephemeral pool (already active via DATABASE_URL in setup)
 

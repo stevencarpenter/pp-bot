@@ -9,23 +9,28 @@ if (!process.env.DATABASE_URL) {
 }
 
 function createTestEphemeralPool() {
-  // Uses pg-mem but avoids persistent Pool / sockets by creating a client per query.
+  // Uses pg-mem with a persistent client to maintain state between queries
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { newDb } = require('pg-mem');
   const db = newDb();
   const pgMem = db.adapters.createPg();
+  // Use a single persistent client instead of creating new ones per query
+  const sharedClient = new pgMem.Client();
+  let connected = false;
+
   const poolLike: any = {
     async query(text: string, params?: any[]) {
-      const client = new pgMem.Client();
-      await client.connect();
-      try {
-        return await client.query(text, params);
-      } finally {
-        await client.end();
+      if (!connected) {
+        await sharedClient.connect();
+        connected = true;
       }
+      return await sharedClient.query(text, params);
     },
     async end() {
-      /* nothing persistent to close */
+      if (connected) {
+        await sharedClient.end();
+        connected = false;
+      }
     },
     on() {
       /* no-op for event listeners */

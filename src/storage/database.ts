@@ -15,7 +15,7 @@ export async function updateUserScore(userId: string, delta: number): Promise<nu
     `INSERT INTO leaderboard (user_id, score)
          VALUES ($1, $2) ON CONFLICT (user_id)
      DO
-        UPDATE SET score = leaderboard.score + $2, updated_at = NOW()
+        UPDATE SET score = leaderboard.score + EXCLUDED.score, updated_at = NOW()
             RETURNING score`,
     [userId, delta]
   );
