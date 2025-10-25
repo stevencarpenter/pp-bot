@@ -18,6 +18,9 @@ function createTestEphemeralPool() {
   const sharedClient = new pgMem.Client();
   let connected = false;
 
+  // Store event listeners for testing
+  const listeners: { [event: string]: Array<(...args: any[]) => void> } = {};
+
   const poolLike: any = {
     async query(text: string, params?: any[]) {
       if (!connected) {
@@ -32,11 +35,16 @@ function createTestEphemeralPool() {
         connected = false;
       }
     },
-    on() {
-      /* no-op for event listeners */
+    on(event: string, handler: (...args: any[]) => void) {
+      if (!listeners[event]) {
+        listeners[event] = [];
+      }
+      listeners[event].push(handler);
     },
-    emit() {
-      /* no-op */
+    emit(event: string, ...args: any[]) {
+      if (listeners[event]) {
+        listeners[event].forEach((handler) => handler(...args));
+      }
     },
     _isEphemeral: true,
   };
@@ -67,10 +75,8 @@ function createPool(): any {
 
 export const pool: any = createPool();
 
-// Only attach listeners for real Pool (not ephemeral)
-if (!pool._isEphemeral) {
-  pool.on('connect', () => logger.info('✓ Database connection established'));
-  pool.on('error', (err: unknown) => logger.error('✗ Unexpected database error:', err));
-}
+// Attach listeners for all pools (including ephemeral for testing)
+pool.on('connect', () => logger.info('✓ Database connection established'));
+pool.on('error', (err: unknown) => logger.error('✗ Unexpected database error:', err));
 
 export default pool as Pool;

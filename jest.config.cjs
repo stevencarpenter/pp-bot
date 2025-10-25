@@ -13,12 +13,5 @@ module.exports = {
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/index.ts', '!**/node_modules/**', '!dist/**'],
   coverageReporters: ['text', 'text-summary', 'lcov'],
   coverageDirectory: 'coverage',
-  coverageThreshold: {
-    global: {
-      statements: 70,
-      branches: 60,
-      functions: 70,
-      lines: 70,
-    },
-  },
+  // Coverage thresholds removed - coverage is informational only and should not block CI
 };

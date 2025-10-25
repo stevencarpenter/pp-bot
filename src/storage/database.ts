@@ -12,10 +12,10 @@ export async function getUserScore(userId: string): Promise<number> {
 export async function updateUserScore(userId: string, delta: number): Promise<number> {
   const pool = getPool();
   const { rows } = await pool.query(
-    `INSERT INTO leaderboard (user_id, score)
-         VALUES ($1, $2) ON CONFLICT (user_id)
+    `INSERT INTO leaderboard (user_id, score, updated_at)
+         VALUES ($1, $2, NOW()) ON CONFLICT (user_id)
      DO
-        UPDATE SET score = leaderboard.score + EXCLUDED.score, updated_at = NOW()
+        UPDATE SET score = leaderboard.score + $2, updated_at = NOW()
             RETURNING score`,
     [userId, delta]
   );
