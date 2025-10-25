@@ -44,7 +44,7 @@ jobs:
       - name: DB Migrate
         run: npm run migrate
       - name: Integration Test
-        run: DATABASE_URL=$DATABASE_URL jest src/__tests__/db.integration.test.ts --runInBand --verbose
+        run: npm test -- src/__tests__/db.integration.test.ts --runInBand --verbose --no-coverage
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
