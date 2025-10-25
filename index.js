@@ -64,6 +64,20 @@ function startBot() {
   const { App } = require('@slack/bolt');
   require('dotenv').config();
   
+  // Log environment variable status
+  console.log('Checking environment variables...');
+  console.log('SLACK_BOT_TOKEN present:', !!process.env.SLACK_BOT_TOKEN);
+  console.log('SLACK_SIGNING_SECRET present:', !!process.env.SLACK_SIGNING_SECRET);
+  console.log('SLACK_APP_TOKEN present:', !!process.env.SLACK_APP_TOKEN);
+
+  if (!process.env.SLACK_BOT_TOKEN || !process.env.SLACK_SIGNING_SECRET || !process.env.SLACK_APP_TOKEN) {
+    console.error('❌ Missing required environment variables. Please set:');
+    console.error('  - SLACK_BOT_TOKEN');
+    console.error('  - SLACK_SIGNING_SECRET');
+    console.error('  - SLACK_APP_TOKEN');
+    process.exit(1);
+  }
+
   const app = new App({
     token: process.env.SLACK_BOT_TOKEN,
     signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -142,9 +156,8 @@ function startBot() {
   // Start the app
   (async () => {
     try {
-      const port = process.env.PORT || 3000;
-      await app.start(port);
-      console.log(`⚡️ Slack bot is running on port ${port}!`);
+      await app.start();
+      console.log(`⚡️ Slack bot is running on Socket Mode!`);
     } catch (error) {
       console.error('Failed to start app:', error);
       process.exit(1);
