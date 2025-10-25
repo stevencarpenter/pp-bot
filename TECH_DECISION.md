@@ -1,4 +1,3 @@
-
 # Technology Decision Document: pp-bot Language Selection
 
 **Date:** October 23, 2025  
@@ -13,17 +12,18 @@
 
 **Recommendation: TypeScript** (Score: 51/55)
 
-After comprehensive analysis of JavaScript, TypeScript, Python, Scala, and Rust for the pp-bot Slack bot application, **TypeScript emerges as the clear winner** with a score of 51 out of 55 possible points across all evaluation criteria.
+After comprehensive analysis of JavaScript, TypeScript, Python, Scala, and Rust for the pp-bot Slack bot application, *
+*TypeScript emerges as the clear winner** with a score of 51 out of 55 possible points across all evaluation criteria.
 
 ### Key Findings
 
-| Language   | Score | Recommendation |
-|------------|-------|----------------|
-| **TypeScript** | **51/55** | ⭐⭐⭐⭐⭐ **Strongly Recommended** |
-| Python     | 45/55 | ⭐⭐⭐ Good for data-heavy use cases |
-| JavaScript | 38/55 | ⭐⭐⭐ Adequate for prototyping only |
-| Rust       | 33/55 | ⭐⭐ Overkill for this application |
-| Scala      | 31/55 | ⭐⭐ Not suited for this use case |
+| Language       | Score     | Recommendation                    |
+|----------------|-----------|-----------------------------------|
+| **TypeScript** | **51/55** | ⭐⭐⭐⭐⭐ **Strongly Recommended**    |
+| Python         | 45/55     | ⭐⭐⭐ Good for data-heavy use cases |
+| JavaScript     | 38/55     | ⭐⭐⭐ Adequate for prototyping only |
+| Rust           | 33/55     | ⭐⭐ Overkill for this application  |
+| Scala          | 31/55     | ⭐⭐ Not suited for this use case   |
 
 ---
 
@@ -44,6 +44,7 @@ All languages were evaluated on 11 criteria, each scored 0-5:
 11. **Hiring Pool** - Ease of finding developers
 
 **Scoring:**
+
 - 5 = Excellent
 - 4 = Very Good
 - 3 = Good
@@ -60,6 +61,7 @@ All languages were evaluated on 11 criteria, each scored 0-5:
 **Total Score: 51/55**
 
 #### Strengths
+
 - ⭐⭐⭐⭐⭐ **Migration Effort (5/5)** - Minimal; rename `.js` to `.ts`, add types
 - ⭐⭐⭐⭐⭐ **Type Safety (5/5)** - Excellent compile-time checking
 - ⭐⭐⭐⭐⭐ **Slack SDK Support (5/5)** - Official SDK has first-class TypeScript support
@@ -73,44 +75,49 @@ All languages were evaluated on 11 criteria, each scored 0-5:
 - ⭐⭐⭐ **Performance (3/5)** - Good for I/O-bound tasks
 
 #### Weaknesses
+
 - Requires compilation step
 - Slightly verbose with type annotations
 - Build tooling adds complexity
 
 #### Use Cases
+
 - ✅ **Perfect for:** Web APIs, Slack bots, I/O-bound applications
 - ✅ **Great for:** Teams already using JavaScript
 - ✅ **Ideal for:** Long-term maintainable projects
 
 #### Migration Effort
+
 - **Time:** 12-16 hours (1-2 days)
 - **Complexity:** Low
 - **Risk:** Low
 
 #### Code Example
+
 ```typescript
 interface Vote {
-  userId: string;
-  action: '++' | '--';
+    userId: string;
+    action: '++' | '--';
 }
 
 function parseVote(text: string): Vote[] {
-  const regex = /<@([A-Z0-9]+)>\s*(\+\+|--)/g;
-  const matches: Vote[] = [];
-  let match: RegExpExecArray | null;
-  
-  while ((match = regex.exec(text)) !== null) {
-    matches.push({
-      userId: match[1],
-      action: match[2] as '++' | '--',
-    });
-  }
-  
-  return matches;
+    const regex = /<@([A-Z0-9]+)>\s*(\+\+|--)/g;
+    const matches: Vote[] = [];
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(text)) !== null) {
+        matches.push({
+            userId: match[1],
+            action: match[2] as '++' | '--',
+        });
+    }
+
+    return matches;
 }
 ```
 
 #### Verdict
+
 **⭐⭐⭐⭐⭐ Strongly Recommended** - Best balance of type safety, ecosystem, and migration effort.
 
 ---
@@ -120,6 +127,7 @@ function parseVote(text: string): Vote[] {
 **Total Score: 45/55**
 
 #### Strengths
+
 - ⭐⭐⭐⭐⭐ **Ecosystem (5/5)** - Rich libraries, especially for data/ML
 - ⭐⭐⭐⭐⭐ **Community Size (5/5)** - Massive community
 - ⭐⭐⭐⭐⭐ **Hiring Pool (5/5)** - Large talent pool
@@ -133,22 +141,26 @@ function parseVote(text: string): Vote[] {
 - ⭐⭐ **Performance (2/5)** - Slower than Node.js for I/O
 
 #### Weaknesses
+
 - GIL limits concurrency
 - Slower than Node.js for I/O operations
 - Requires complete rewrite (40-50 hours)
 - Different deployment model
 
 #### Use Cases
+
 - ✅ **Perfect for:** Data processing, ML/AI, analytics
 - ✅ **Great for:** Teams with Python expertise
 - ⚠️ **Adequate for:** I/O-bound web services
 
 #### Migration Effort
+
 - **Time:** 3-5 days (40-50 hours)
 - **Complexity:** Medium
 - **Risk:** Medium
 
 #### Code Example
+
 ```python
 from slack_bolt import App
 import re
@@ -168,6 +180,7 @@ def handle_vote(message, say):
 ```
 
 #### Verdict
+
 **⭐⭐⭐ Good Alternative** - Choose if planning ML/AI features or team has Python expertise.
 
 ---
@@ -177,6 +190,7 @@ def handle_vote(message, say):
 **Total Score: 38/55**
 
 #### Strengths
+
 - ⭐⭐⭐⭐⭐ **Development Speed (5/5)** - Fastest prototyping
 - ⭐⭐⭐⭐⭐ **Ecosystem (5/5)** - Largest package ecosystem (npm)
 - ⭐⭐⭐⭐⭐ **Slack SDK Support (5/5)** - Official SDK
@@ -190,17 +204,20 @@ def handle_vote(message, say):
 - ⭐ **Type Safety (1/5)** - Runtime errors only
 
 #### Weaknesses
+
 - No compile-time type checking
 - Runtime errors that could be caught earlier
 - Difficult to refactor safely
 - Limited IDE support
 
 #### Use Cases
+
 - ✅ **Perfect for:** Prototypes, proof-of-concepts
 - ⚠️ **Adequate for:** Small, short-lived projects
 - ❌ **Not recommended for:** Long-term production applications
 
 #### Verdict
+
 **⭐⭐⭐ Adequate for Prototyping** - Not recommended for production long-term.
 
 ---
@@ -210,6 +227,7 @@ def handle_vote(message, say):
 **Total Score: 33/55**
 
 #### Strengths
+
 - ⭐⭐⭐⭐⭐ **Performance (5/5)** - Blazingly fast
 - ⭐⭐⭐⭐⭐ **Type Safety (5/5)** - Strong type system
 - ⭐⭐⭐⭐ **Maintainability (4/5)** - Compiler prevents many bugs
@@ -223,6 +241,7 @@ def handle_vote(message, say):
 - ⭐ **Migration Effort (1/5)** - Complete rewrite, 2-3 weeks
 
 #### Weaknesses
+
 - Extremely steep learning curve
 - No official Slack SDK (must build own)
 - Borrow checker complexity
@@ -230,16 +249,19 @@ def handle_vote(message, say):
 - Massive migration effort
 
 #### Use Cases
+
 - ✅ **Perfect for:** Systems programming, embedded, high-performance computing
 - ⚠️ **Adequate for:** CPU-bound microservices
 - ❌ **Overkill for:** I/O-bound web services, Slack bots
 
 #### Migration Effort
+
 - **Time:** 2-3 weeks (100+ hours)
 - **Complexity:** Very High
 - **Risk:** Very High
 
 #### Verdict
+
 **⭐⭐ Not Recommended** - Massive overkill for this use case.
 
 ---
@@ -249,6 +271,7 @@ def handle_vote(message, say):
 **Total Score: 31/55**
 
 #### Strengths
+
 - ⭐⭐⭐⭐⭐ **Type Safety (5/5)** - Powerful type system
 - ⭐⭐⭐⭐ **Performance (4/5)** - JVM performance
 - ⭐⭐⭐⭐ **Maintainability (4/5)** - Good for complex logic
@@ -262,6 +285,7 @@ def handle_vote(message, say):
 - ⭐ **Migration Effort (1/5)** - Complete rewrite, 1-2 weeks
 
 #### Weaknesses
+
 - No official Slack SDK
 - Steep learning curve for FP paradigm
 - Slow compilation times
@@ -269,16 +293,19 @@ def handle_vote(message, say):
 - Overkill for simple bot
 
 #### Use Cases
+
 - ✅ **Perfect for:** Complex business logic, enterprise systems, data pipelines
 - ⚠️ **Adequate for:** Microservices with complex logic
 - ❌ **Overkill for:** Simple Slack bots, I/O-bound applications
 
 #### Migration Effort
+
 - **Time:** 1-2 weeks (80-100 hours)
 - **Complexity:** High
 - **Risk:** High
 
 #### Verdict
+
 **⭐⭐ Not Recommended** - Overkill for this use case.
 
 ---
@@ -298,30 +325,30 @@ def handle_vote(message, say):
 ### Type Safety
 
 | Language   | Score | Error Detection |
-|------------|-------|----------------|
-| TypeScript | 5/5   | Compile-time   |
-| Rust       | 5/5   | Compile-time   |
-| Scala      | 5/5   | Compile-time   |
-| Python     | 3/5   | Optional hints |
-| JavaScript | 1/5   | Runtime only   |
+|------------|-------|-----------------|
+| TypeScript | 5/5   | Compile-time    |
+| Rust       | 5/5   | Compile-time    |
+| Scala      | 5/5   | Compile-time    |
+| Python     | 3/5   | Optional hints  |
+| JavaScript | 1/5   | Runtime only    |
 
 ### Ecosystem & Support
 
-| Language   | npm Packages | Slack SDK | Railway Support |
-|------------|--------------|-----------|-----------------|
-| TypeScript | ✅ Full      | ✅ Official | ✅ Excellent   |
-| JavaScript | ✅ Full      | ✅ Official | ✅ Excellent   |
-| Python     | ❌ PyPI      | ✅ Official | ✅ Excellent   |
-| Scala      | ❌ Maven     | ❌ None    | ⚠️ Good        |
-| Rust       | ❌ Crates    | ❌ None    | ⚠️ Good        |
+| Language   | npm Packages | Slack SDK  | Railway Support |
+|------------|--------------|------------|-----------------|
+| TypeScript | ✅ Full       | ✅ Official | ✅ Excellent     |
+| JavaScript | ✅ Full       | ✅ Official | ✅ Excellent     |
+| Python     | ❌ PyPI       | ✅ Official | ✅ Excellent     |
+| Scala      | ❌ Maven      | ❌ None     | ⚠️ Good         |
+| Rust       | ❌ Crates     | ❌ None     | ⚠️ Good         |
 
 ### Migration Effort
 
-| Language   | Time Required | Complexity | Risk  |
-|------------|---------------|------------|-------|
-| TypeScript | 1-2 days      | Low        | Low   |
-| Python     | 3-5 days      | Medium     | Medium |
-| Scala      | 1-2 weeks     | High       | High  |
+| Language   | Time Required | Complexity | Risk      |
+|------------|---------------|------------|-----------|
+| TypeScript | 1-2 days      | Low        | Low       |
+| Python     | 3-5 days      | Medium     | Medium    |
+| Scala      | 1-2 weeks     | High       | High      |
 | Rust       | 2-3 weeks     | Very High  | Very High |
 
 ---
@@ -331,6 +358,7 @@ def handle_vote(message, say):
 ### Application Characteristics
 
 **pp-bot is:**
+
 - ✅ I/O-bound (Slack API, database queries)
 - ✅ Moderate traffic (~1000 votes/day)
 - ✅ Simple business logic (vote counting)
@@ -349,13 +377,13 @@ def handle_vote(message, say):
 
 ### Language Fit
 
-| Language   | I/O Performance | Type Safety | Team Familiarity | Fit Score |
-|------------|----------------|-------------|------------------|-----------|
-| **TypeScript** | ✅ Excellent | ✅ Excellent | ✅ High | **9/10** |
-| Python     | ⚠️ Good       | ⚠️ Good    | ⚠️ Medium | 7/10 |
-| JavaScript | ✅ Excellent | ❌ Poor     | ✅ High | 6/10 |
-| Rust       | ✅ Excellent | ✅ Excellent | ❌ Low | 4/10 |
-| Scala      | ✅ Excellent | ✅ Excellent | ❌ Low | 4/10 |
+| Language       | I/O Performance | Type Safety | Team Familiarity | Fit Score |
+|----------------|-----------------|-------------|------------------|-----------|
+| **TypeScript** | ✅ Excellent     | ✅ Excellent | ✅ High           | **9/10**  |
+| Python         | ⚠️ Good         | ⚠️ Good     | ⚠️ Medium        | 7/10      |
+| JavaScript     | ✅ Excellent     | ❌ Poor      | ✅ High           | 6/10      |
+| Rust           | ✅ Excellent     | ✅ Excellent | ❌ Low            | 4/10      |
+| Scala          | ✅ Excellent     | ✅ Excellent | ❌ Low            | 4/10      |
 
 ---
 
@@ -363,31 +391,31 @@ def handle_vote(message, say):
 
 ### TypeScript Migration Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Type errors during migration | Medium | Low | Gradual migration, disable strict mode initially |
-| Build step adds complexity | Low | Low | Well-documented build process |
-| Team unfamiliar with types | Low | Low | TypeScript is easy to learn for JS developers |
+| Risk                         | Likelihood | Impact | Mitigation                                       |
+|------------------------------|------------|--------|--------------------------------------------------|
+| Type errors during migration | Medium     | Low    | Gradual migration, disable strict mode initially |
+| Build step adds complexity   | Low        | Low    | Well-documented build process                    |
+| Team unfamiliar with types   | Low        | Low    | TypeScript is easy to learn for JS developers    |
 
 **Overall Risk: LOW** ✅
 
 ### Python Migration Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Complete rewrite introduces bugs | High | High | Comprehensive testing |
-| Team unfamiliar with Python | Medium | Medium | Training, pair programming |
-| Performance issues | Medium | Medium | Profiling, optimization |
+| Risk                             | Likelihood | Impact | Mitigation                 |
+|----------------------------------|------------|--------|----------------------------|
+| Complete rewrite introduces bugs | High       | High   | Comprehensive testing      |
+| Team unfamiliar with Python      | Medium     | Medium | Training, pair programming |
+| Performance issues               | Medium     | Medium | Profiling, optimization    |
 
 **Overall Risk: MEDIUM** ⚠️
 
 ### Rust/Scala Migration Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| Extremely long migration time | Very High | Very High | Not feasible |
-| Team cannot learn language quickly | Very High | Very High | Extensive training |
-| No official Slack SDK | Very High | High | Build from scratch |
+| Risk                               | Likelihood | Impact    | Mitigation         |
+|------------------------------------|------------|-----------|--------------------|
+| Extremely long migration time      | Very High  | Very High | Not feasible       |
+| Team cannot learn language quickly | Very High  | Very High | Extensive training |
+| No official Slack SDK              | Very High  | High      | Build from scratch |
 
 **Overall Risk: VERY HIGH** ❌
 
@@ -418,6 +446,7 @@ Assuming $100/hour developer rate:
 **Rating: ⭐⭐⭐⭐⭐ (51/55)**
 
 **Rationale:**
+
 1. **Minimal migration effort** (1-2 days) with significant long-term benefits
 2. **Best-in-class type safety** prevents entire classes of bugs
 3. **Same ecosystem** - keep all existing npm packages and Slack SDK
@@ -426,6 +455,7 @@ Assuming $100/hour developer rate:
 6. **Perfect fit** for I/O-bound Slack bot applications
 
 **When to use:**
+
 - ✅ Building maintainable production applications
 - ✅ Team knows JavaScript
 - ✅ I/O-bound workloads
@@ -436,11 +466,13 @@ Assuming $100/hour developer rate:
 **Rating: ⭐⭐⭐ (45/55)**
 
 **Rationale:**
+
 - Excellent if planning ML/AI features
 - Great for data processing and analytics
 - Large ecosystem for data science
 
 **When to use:**
+
 - ✅ Planning to add ML/AI features
 - ✅ Need heavy data processing
 - ✅ Team has strong Python expertise
@@ -452,6 +484,7 @@ Assuming $100/hour developer rate:
 **Rust Rating: ⭐⭐ (33/55)**
 
 **Rationale:**
+
 - Massive overkill for this use case
 - No official Slack SDK
 - Extremely high migration effort
@@ -463,6 +496,7 @@ Assuming $100/hour developer rate:
 ## Implementation Plan
 
 ### Phase 1: TypeScript Migration (Recommended)
+
 1. Week 1: Set up TypeScript, migrate core files
 2. Week 2: Add comprehensive types, update tests
 3. Week 3: Deploy to production, monitor
@@ -470,6 +504,7 @@ Assuming $100/hour developer rate:
 **Total Time:** 2-3 weeks (includes testing and deployment)
 
 ### Phase 2: Python Migration (Alternative)
+
 1. Week 1-2: Set up Python project, rewrite core logic
 2. Week 3-4: Implement all features, comprehensive testing
 3. Week 5: Deploy to production, monitor
@@ -492,19 +527,19 @@ Assuming $100/hour developer rate:
 
 ### TypeScript Detailed Scores
 
-| Criterion          | Score | Justification |
-|-------------------|-------|---------------|
+| Criterion         | Score | Justification                           |
+|-------------------|-------|-----------------------------------------|
 | Development Speed | 4/5   | Slightly slower than JS, but still fast |
-| Type Safety       | 5/5   | Excellent compile-time checking |
-| Performance       | 3/5   | Same as JS, good for I/O |
-| Slack SDK         | 5/5   | First-class official support |
-| Railway Support   | 5/5   | Native Node.js support |
-| Learning Curve    | 4/5   | Easy for JS developers |
-| Ecosystem         | 5/5   | Full npm ecosystem |
-| Migration Effort  | 5/5   | Minimal, 1-2 days |
-| Maintainability   | 5/5   | Superior refactoring |
-| Community         | 5/5   | Huge and growing |
-| Hiring Pool       | 5/5   | Massive talent pool |
+| Type Safety       | 5/5   | Excellent compile-time checking         |
+| Performance       | 3/5   | Same as JS, good for I/O                |
+| Slack SDK         | 5/5   | First-class official support            |
+| Railway Support   | 5/5   | Native Node.js support                  |
+| Learning Curve    | 4/5   | Easy for JS developers                  |
+| Ecosystem         | 5/5   | Full npm ecosystem                      |
+| Migration Effort  | 5/5   | Minimal, 1-2 days                       |
+| Maintainability   | 5/5   | Superior refactoring                    |
+| Community         | 5/5   | Huge and growing                        |
+| Hiring Pool       | 5/5   | Massive talent pool                     |
 
 **Total: 51/55**
 
