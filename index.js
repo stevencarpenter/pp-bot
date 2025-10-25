@@ -141,10 +141,40 @@ function startBot() {
 
   // Start the app
   (async () => {
-    const port = process.env.PORT || 3000;
-    await app.start(port);
-    console.log(`⚡️ Slack bot is running on port ${port}!`);
+    try {
+      const port = process.env.PORT || 3000;
+      await app.start(port);
+      console.log(`⚡️ Slack bot is running on port ${port}!`);
+    } catch (error) {
+      console.error('Failed to start app:', error);
+      process.exit(1);
+    }
   })();
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    try {
+      await app.stop();
+      console.log('⚡️ Slack bot stopped gracefully');
+      process.exit(0);
+    } catch (error) {
+      console.error('Error stopping app:', error);
+      process.exit(1);
+    }
+  });
+
+  process.on('SIGINT', async () => {
+    console.log('SIGINT signal received: closing HTTP server');
+    try {
+      await app.stop();
+      console.log('⚡️ Slack bot stopped gracefully');
+      process.exit(0);
+    } catch (error) {
+      console.error('Error stopping app:', error);
+      process.exit(1);
+    }
+  });
 }
 
 // Only start the bot if this file is run directly
