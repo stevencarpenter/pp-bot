@@ -9,9 +9,9 @@ services:
       POSTGRES_PASSWORD: ppbot
       POSTGRES_DB: ppbot
     ports:
-      - "5433:5432"
+      - '5433:5432'
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ppbot" ]
+      test: ['CMD-SHELL', 'pg_isready -U ppbot']
       interval: 2s
       timeout: 5s
       retries: 10
@@ -19,4 +19,3 @@ services:
       - pgdata_ppbot:/var/lib/postgresql/data
 volumes:
   pgdata_ppbot:
-

@@ -64,6 +64,7 @@ When adding new features:
 ### Adding a new slash command
 
 1. Add the command handler in `index.js` inside the `startBot()` function:
+
    ```javascript
    app.command('/mycommand', async ({ command, ack, say }) => {
      await ack();

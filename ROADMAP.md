@@ -520,7 +520,7 @@ CREATE TABLE vote_history
 ### High-Risk Items
 
 | Risk                                      | Impact | Mitigation                               | Owner    |
-|-------------------------------------------|--------|------------------------------------------|----------|
+| ----------------------------------------- | ------ | ---------------------------------------- | -------- |
 | Data loss during migration                | High   | Backup JSON data, test migration         | Dev Team |
 | Railway.com costs exceed budget           | Medium | Monitor usage, optimize queries          | PM       |
 | TypeScript migration breaks functionality | High   | Comprehensive testing, gradual migration | Dev Team |
@@ -616,6 +616,7 @@ Week 7+: Polish & Launch
 ### For Developers
 
 1. **Set up local environment**
+
    ```bash
    git clone https://github.com/stevencarpenter/pp-bot.git
    cd pp-bot

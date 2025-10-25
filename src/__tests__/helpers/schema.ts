@@ -1,11 +1,11 @@
-import {pool} from '../../db';
+import { pool } from '../../db';
 
 let initialized = false;
 
 export async function ensureSchema() {
-    if (initialized) return;
-    // Nicely formatted DDL with a sql tag comment for editor tooling.
-    const ddl = /* sql */ `
+  if (initialized) return;
+  // Nicely formatted DDL with a sql tag comment for editor tooling.
+  const ddl = /* sql */ `
 CREATE TABLE IF NOT EXISTS leaderboard (
     user_id VARCHAR(20) PRIMARY KEY,
     score INTEGER DEFAULT 0 NOT NULL,
@@ -23,6 +23,6 @@ CREATE TABLE IF NOT EXISTS vote_history (
     created_at TIMESTAMP DEFAULT NOW()
 );
 `;
-    await pool.query(ddl);
-    initialized = true;
+  await pool.query(ddl);
+  initialized = true;
 }
