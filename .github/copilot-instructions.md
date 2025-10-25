@@ -275,7 +275,7 @@ async function databaseOperation() {
 
 ## Deployment
 
-- Deploy to Railway.com (see DEPLOYMENT.md)
+- Deploy to Railway.com (see the README for deployment instructions)
 - Run migrations before deploying new schema changes
 - Test in a staging environment when possible
 - Monitor logs after deployment
