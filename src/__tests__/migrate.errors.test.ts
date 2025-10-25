@@ -5,6 +5,7 @@
 describe('migration script error handling', () => {
   const originalEnv = { ...process.env };
   const originalExit = process.exit;
+  const originalConsoleError = console.error;
   let exitCode: number | undefined;
 
   beforeEach(() => {
@@ -14,12 +15,15 @@ describe('migration script error handling', () => {
       exitCode = code as number;
       throw new Error('process.exit called');
     }) as never;
+    // Suppress console.error during error path tests
+    console.error = jest.fn();
   });
 
   afterEach(() => {
     process.env = { ...originalEnv };
     process.exit = originalExit;
     process.exitCode = undefined;
+    console.error = originalConsoleError;
   });
 
   test('should error when DATABASE_URL is not set', async () => {
@@ -31,9 +35,9 @@ describe('migration script error handling', () => {
 
     try {
       await migrate();
-    } catch (e: any) {
+    } catch (e: unknown) {
       // Expect the process.exit mock to throw
-      expect(e.message).toBe('process.exit called');
+      expect((e as Error).message).toBe('process.exit called');
     }
 
     // Verify process.exit was called with error code
