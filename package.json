@@ -2,19 +2,36 @@
   "name": "pp-bot",
   "version": "1.0.0",
   "description": "A Slack bot that manages a leaderboard of users with ++ and -- voting",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "jest"
+    "build": "tsc --project tsconfig.json",
+    "start": "npm run build && node dist/index.js",
+    "migrate": "ts-node src/scripts/migrate.ts",
+    "test": "jest",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "test:integration": "npm run build && npm run db:up && wait-on tcp:5433 && DATABASE_URL=postgres://ppbot:ppbot@localhost:5433/ppbot ts-node src/scripts/migrate.ts && DATABASE_URL=postgres://ppbot:ppbot@localhost:5433/ppbot jest src/__tests__/db.integration.test.ts --runInBand && npm run db:down"
   },
-  "keywords": ["slack", "bot", "leaderboard"],
+  "keywords": [
+    "slack",
+    "bot",
+    "leaderboard"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@slack/bolt": "^3.14.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "pg": "^8.12.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.30",
+    "@types/pg": "^8.15.5",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0",
+    "wait-on": "^9.0.1"
   }
 }
