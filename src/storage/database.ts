@@ -7,24 +7,75 @@ import { getPool } from './pool';
 type DatabaseError = {
   code?: string;
   message?: string;
+  errno?: number;
+  errors?: unknown[];
 };
 
 const DATABASE_STARTUP_PG_CODE = '57P03';
-const DATABASE_STARTUP_MESSAGE_FRAGMENT = 'the database system is starting up';
+const TRANSIENT_ERROR_CODES = new Set([
+  DATABASE_STARTUP_PG_CODE,
+  '08001', // SQL client unable to establish SQL connection
+  '08006', // Connection failure
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'EPIPE',
+  'ETIMEDOUT',
+  'EHOSTUNREACH',
+  'ENETUNREACH',
+]);
+const TRANSIENT_ERRNOS = new Set([-110, -111]); // Linux timeout/refused
+const TRANSIENT_MESSAGE_SNIPPETS = [
+  'the database system is starting up',
+  'server closed the connection unexpectedly',
+  'terminating connection due to administrator command',
+  'connection terminated unexpectedly',
+  'connect etimedout',
+  'connect econnrefused',
+];
 const DEFAULT_OPERATION_RETRIES = 3;
 const RECOVERY_WAIT_MAX_RETRIES = 15;
 const RECOVERY_WAIT_INITIAL_DELAY_MS = 2000;
 
 let databaseRecoveryPromise: Promise<void> | null = null;
 
-function isDatabaseStartupError(error: unknown): error is DatabaseError {
-  if (!error || typeof error !== 'object') return false;
-  const { code, message } = error as DatabaseError;
-  if (code && code.toUpperCase() === DATABASE_STARTUP_PG_CODE) return true;
-  if (typeof message === 'string') {
-    return message.toLowerCase().includes(DATABASE_STARTUP_MESSAGE_FRAGMENT);
+function expandErrors(error: unknown): unknown[] {
+  if (!error) return [];
+  const expanded: unknown[] = Array.isArray(error) ? [...error] : [error];
+
+  if (error instanceof AggregateError && Array.isArray(error.errors)) {
+    expanded.push(...error.errors);
+  } else if (typeof error === 'object' && error && 'errors' in error) {
+    const nested = (error as DatabaseError).errors;
+    if (Array.isArray(nested)) {
+      expanded.push(...nested);
+    }
   }
+
+  return expanded;
+}
+
+function isTransientErrorCandidate(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const { code, message, errno } = error as DatabaseError;
+
+  if (typeof code === 'string' && TRANSIENT_ERROR_CODES.has(code.toUpperCase())) {
+    return true;
+  }
+
+  if (typeof errno === 'number' && TRANSIENT_ERRNOS.has(errno)) {
+    return true;
+  }
+
+  if (typeof message === 'string') {
+    const normalized = message.toLowerCase();
+    return TRANSIENT_MESSAGE_SNIPPETS.some((snippet) => normalized.includes(snippet));
+  }
+
   return false;
+}
+
+function isDatabaseStartupError(error: unknown): boolean {
+  return expandErrors(error).some((entry) => isTransientErrorCandidate(entry));
 }
 
 function formatErrorMessage(error: unknown): string {
