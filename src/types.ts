@@ -10,28 +10,6 @@ export interface Vote {
   action: VoteAction;
 }
 
-/** Leaderboard data structure mapping user IDs to scores */
-export interface Leaderboard {
-  [userId: UserId]: number;
-}
-
-/** Leaderboard entry with user info */
-export interface LeaderboardEntry {
-  userId: UserId;
-  score: number;
-  rank: number;
-}
-
-/** Environment variables configuration */
-export interface EnvConfig {
-  SLACK_BOT_TOKEN: string;
-  SLACK_APP_TOKEN: string;
-  SLACK_SIGNING_SECRET: string;
-  NODE_ENV?: 'development' | 'production' | 'test';
-  LOG_LEVEL?: string;
-  DATABASE_URL?: string;
-}
-
 export interface VoteRecord {
   voterId: UserId;
   votedUserId: UserId;
