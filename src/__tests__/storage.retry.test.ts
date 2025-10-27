@@ -32,6 +32,58 @@ describe('withDatabaseRetry', () => {
     expect(waitForDatabaseMock).toHaveBeenCalledTimes(1);
   });
 
+  test('retries when connection times out', async () => {
+    let attempts = 0;
+    const result = await withDatabaseRetry(async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        const error: any = new Error('connect ETIMEDOUT 10.0.0.1:5432');
+        error.code = 'ETIMEDOUT';
+        error.errno = -110;
+        throw error;
+      }
+      return 'success';
+    });
+
+    expect(result).toBe('success');
+    expect(waitForDatabaseMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('retries AggregateError with transient inner errors', async () => {
+    let attempts = 0;
+    const result = await withDatabaseRetry(async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        const inner: any = new Error('connect ECONNREFUSED ::1:5432');
+        inner.code = 'ECONNREFUSED';
+        inner.errno = -111;
+        throw new AggregateError([inner], 'AggregateError [ECONNREFUSED]');
+      }
+      return 'success';
+    });
+
+    expect(result).toBe('success');
+    expect(waitForDatabaseMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('retries AggregateError when top-level code is transient', async () => {
+    let attempts = 0;
+    const result = await withDatabaseRetry(async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        const inner: any = new Error('low-level failure');
+        // Intentionally omit code on the inner error to ensure top-level metadata is used.
+        const aggregate: any = new AggregateError([inner], 'AggregateError [ETIMEDOUT]');
+        aggregate.code = 'ETIMEDOUT';
+        throw aggregate;
+      }
+      return 'success';
+    });
+
+    expect(result).toBe('success');
+    expect(waitForDatabaseMock).toHaveBeenCalledTimes(1);
+  });
+
   test('does not retry non-startup errors', async () => {
     await expect(
       withDatabaseRetry(async () => {
