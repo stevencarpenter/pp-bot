@@ -62,18 +62,18 @@ railway login
 ### Step 1: Create New Project
 
 1. **Navigate to Railway Dashboard**
-    - Go to https://railway.app
-    - Click "New Project"
+   - Go to https://railway.app
+   - Click "New Project"
 
 2. **Connect GitHub Repository**
-    - Select "Deploy from GitHub repo"
-    - Authorize Railway to access your GitHub
-    - Select `stevencarpenter/pp-bot` repository
+   - Select "Deploy from GitHub repo"
+   - Authorize Railway to access your GitHub
+   - Select `stevencarpenter/pp-bot` repository
 
 3. **Configure Initial Settings**
-    - Project name: `pp-bot-production`
-    - Environment: `production`
-    - Branch: `main`
+   - Project name: `pp-bot-production`
+   - Environment: `production`
+   - Branch: `main`
 
 ### Step 2: Configure Build Settings
 
