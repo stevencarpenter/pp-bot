@@ -1,6 +1,6 @@
 # Multi-stage optimized Dockerfile for pp-bot
 # Build stage
-FROM node:20-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
@@ -11,7 +11,7 @@ COPY src ./src
 RUN npx tsc --project tsconfig.json
 
 # Production stage
-FROM node:20-alpine AS prod
+FROM node:25-alpine AS prod
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
