@@ -74,30 +74,30 @@ npm install
 ```
 
 3. Create a Slack App:
-   - Go to https://api.slack.com/apps
-   - Click "Create New App" → "From scratch"
-   - Name your app (e.g., "PP Bot") and select your workspace
+    - Go to https://api.slack.com/apps
+    - Click "Create New App" → "From scratch"
+    - Name your app (e.g., "PP Bot") and select your workspace
 
 4. Configure your Slack App:
-   - **OAuth & Permissions**: Add these Bot Token Scopes:
-     - `app_mentions:read`
-     - `chat:write`
-     - `channels:history`
-     - `channels:read`
-     - `groups:history`
-     - `groups:read`
-     - `im:history`
-     - `mpim:history`
-     - `commands`
-   - **Socket Mode**: Enable Socket Mode and create an App-Level Token with `connections:write` scope
-   - **Slash Commands**: Create two commands:
-     - `/leaderboard` - Description: "Show the leaderboard"
-     - `/score` - Description: "Show your score"
-   - **Event Subscriptions**: Enable events and subscribe to:
-     - `message.channels`
-     - `message.groups`
-     - `message.im`
-     - `message.mpim`
+    - **OAuth & Permissions**: Add these Bot Token Scopes:
+        - `app_mentions:read`
+        - `chat:write`
+        - `channels:history`
+        - `channels:read`
+        - `groups:history`
+        - `groups:read`
+        - `im:history`
+        - `mpim:history`
+        - `commands`
+    - **Socket Mode**: Enable Socket Mode and create an App-Level Token with `connections:write` scope
+    - **Slash Commands**: Create two commands:
+        - `/leaderboard` - Description: "Show the leaderboard"
+        - `/score` - Description: "Show your score"
+    - **Event Subscriptions**: Enable events and subscribe to:
+        - `message.channels`
+        - `message.groups`
+        - `message.im`
+        - `message.mpim`
 
 5. Install the app to your workspace (OAuth & Permissions page)
 
@@ -108,10 +108,10 @@ cp .env.example .env
 ```
 
 7. Edit `.env` and add your tokens:
-   - `SLACK_BOT_TOKEN`: Bot token (starts with `xoxb-`)
-   - `SLACK_APP_TOKEN`: App-level token (starts with `xapp-`)
-   - `SLACK_SIGNING_SECRET`: App signing secret
-   - (Optional) `DATABASE_URL`: e.g. `postgres://user:pass@localhost:5432/ppbot`
+    - `SLACK_BOT_TOKEN`: Bot token (starts with `xoxb-`)
+    - `SLACK_APP_TOKEN`: App-level token (starts with `xapp-`)
+    - `SLACK_SIGNING_SECRET`: App signing secret
+    - (Optional) `DATABASE_URL`: e.g. `postgres://user:pass@localhost:5432/ppbot`
 
 ### Running the Bot
 
@@ -154,7 +154,8 @@ The `/leaderboard` command surfaces both leaderboards, and `/score` reports the 
 - Tests use an ephemeral pg-mem backed pool substitute to avoid dangling sockets.
 - Integration tests build schema via a shared `ensureSchema` helper.
 - Coverage thresholds enforce a baseline to catch regressions early.
-- Vote parsing sanitizes user and thing targets with the well-maintained [`validator`](https://github.com/validatorjs/validator.js) library before interacting with the database.
+- Vote parsing sanitizes user and thing targets with the well-maintained [
+  `validator`](https://github.com/validatorjs/validator.js) library before interacting with the database.
 
 ## License
 

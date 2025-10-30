@@ -2,7 +2,8 @@
 
 ## Project Overview
 
-pp-bot is a Slack bot that manages a leaderboard of users with `++` and `--` voting. The bot is built with TypeScript, uses the Slack Bolt SDK, and stores data in PostgreSQL.
+pp-bot is a Slack bot that manages a leaderboard of users with `++` and `--` voting. The bot is built with TypeScript,
+uses the Slack Bolt SDK, and stores data in PostgreSQL.
 
 ## Technology Stack
 

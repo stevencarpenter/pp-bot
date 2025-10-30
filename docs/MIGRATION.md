@@ -20,7 +20,8 @@
 
 ## Executive Summary
 
-Based on the technology analysis (see `TECH_DECISION.md` in this directory), **TypeScript is the recommended migration path** for pp-bot
+Based on the technology analysis (see `TECH_DECISION.md` in this directory), **TypeScript is the recommended migration
+path** for pp-bot
 due to:
 
 - ✅ Minimal migration effort (1-2 days)
@@ -228,21 +229,21 @@ export interface Config {
 ```typescript
 // src/utils/vote.ts
 
-import { Vote } from '../types';
+import {Vote} from '../types';
 
 export function parseVote(text: string): Vote[] {
-  const regex = /<@([A-Z0-9]+)>\s*(\+\+|--)/g;
-  const matches: Vote[] = [];
-  let match: RegExpExecArray | null;
+    const regex = /<@([A-Z0-9]+)>\s*(\+\+|--)/g;
+    const matches: Vote[] = [];
+    let match: RegExpExecArray | null;
 
-  while ((match = regex.exec(text)) !== null) {
-    matches.push({
-      userId: match[1],
-      action: match[2] as '++' | '--',
-    });
-  }
+    while ((match = regex.exec(text)) !== null) {
+        matches.push({
+            userId: match[1],
+            action: match[2] as '++' | '--',
+        });
+    }
 
-  return matches;
+    return matches;
 }
 ```
 
@@ -296,12 +297,12 @@ export async function getTopUsers(pool: Pool, limit: number = 10): Promise<Leade
 ```typescript
 // src/index.ts
 
-import { App } from '@slack/bolt';
-import { getConfig } from './config/env';
-import { createPool } from './storage/pool';
-import { parseVote } from './utils/vote';
-import { getUserScore, updateUserScore, getTopUsers } from './storage/database';
-import { MessageContext, CommandContext } from './types';
+import {App} from '@slack/bolt';
+import {getConfig} from './config/env';
+import {createPool} from './storage/pool';
+import {parseVote} from './utils/vote';
+import {getUserScore, updateUserScore, getTopUsers} from './storage/database';
+import {MessageContext, CommandContext} from './types';
 
 // Load and validate configuration
 const config = getConfig();
@@ -311,85 +312,85 @@ const pool = createPool(config.database);
 
 // Initialize Slack app
 const app = new App({
-  token: config.slack.botToken,
-  appToken: config.slack.appToken,
-  signingSecret: config.slack.signingSecret,
-  socketMode: true,
+    token: config.slack.botToken,
+    appToken: config.slack.appToken,
+    signingSecret: config.slack.signingSecret,
+    socketMode: true,
 });
 
 // Message handler
 app.message(async (context: MessageContext) => {
-  const { message, say } = context;
+    const {message, say} = context;
 
-  const votes = parseVote(message.text);
-  if (votes.length === 0) return;
+    const votes = parseVote(message.text);
+    if (votes.length === 0) return;
 
-  for (const vote of votes) {
-    if (vote.userId === message.user) {
-      await say(`<@${vote.userId}> cannot vote for themselves!`);
-      continue;
+    for (const vote of votes) {
+        if (vote.userId === message.user) {
+            await say(`<@${vote.userId}> cannot vote for themselves!`);
+            continue;
+        }
+
+        const delta = vote.action === '++' ? 1 : -1;
+        const newScore = await updateUserScore(pool, vote.userId, delta);
+
+        await say(`<@${vote.userId}> now has ${newScore} points!`);
     }
-
-    const delta = vote.action === '++' ? 1 : -1;
-    const newScore = await updateUserScore(pool, vote.userId, delta);
-
-    await say(`<@${vote.userId}> now has ${newScore} points!`);
-  }
 });
 
 // Leaderboard command
 app.command('/leaderboard', async (context: CommandContext) => {
-  const { ack, say } = context;
-  await ack();
+    const {ack, say} = context;
+    await ack();
 
-  const topUsers = await getTopUsers(pool, 10);
+    const topUsers = await getTopUsers(pool, 10);
 
-  let message = '🏆 *Leaderboard*\n\n';
-  topUsers.forEach((entry, index) => {
-    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-    message += `${medal} <@${entry.userId}>: ${entry.score} points\n`;
-  });
+    let message = '🏆 *Leaderboard*\n\n';
+    topUsers.forEach((entry, index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+        message += `${medal} <@${entry.userId}>: ${entry.score} points\n`;
+    });
 
-  await say(message);
+    await say(message);
 });
 
 // Score command
 app.command('/score', async (context: CommandContext) => {
-  const { command, ack, say } = context;
-  await ack();
+    const {command, ack, say} = context;
+    await ack();
 
-  const userId = command.text
-    ? command.text.match(/<@([A-Z0-9]+)>/)?.[1] || command.user_id
-    : command.user_id;
-  const score = await getUserScore(pool, userId);
+    const userId = command.text
+        ? command.text.match(/<@([A-Z0-9]+)>/)?.[1] || command.user_id
+        : command.user_id;
+    const score = await getUserScore(pool, userId);
 
-  await say(`<@${userId}> has ${score} points`);
+    await say(`<@${userId}> has ${score} points`);
 });
 
 // Start application
 async function start(): Promise<void> {
-  try {
-    await app.start(config.port);
-    console.log(`⚡️ Bolt app is running on port ${config.port}!`);
-  } catch (error) {
-    console.error('Failed to start app:', error);
-    process.exit(1);
-  }
+    try {
+        await app.start(config.port);
+        console.log(`⚡️ Bolt app is running on port ${config.port}!`);
+    } catch (error) {
+        console.error('Failed to start app:', error);
+        process.exit(1);
+    }
 }
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully...');
-  await app.stop();
-  await pool.end();
-  process.exit(0);
+    console.log('SIGTERM received, shutting down gracefully...');
+    await app.stop();
+    await pool.end();
+    process.exit(0);
 });
 
 if (require.main === module) {
-  start();
+    start();
 }
 
-export { app };
+export {app};
 ```
 
 #### Phase 5: Testing (2-3 hours)
@@ -399,23 +400,23 @@ export { app };
 ```typescript
 // src/utils/vote.test.ts
 
-import { parseVote } from './vote';
-import { Vote } from '../types';
+import {parseVote} from './vote';
+import {Vote} from '../types';
 
 describe('parseVote', () => {
-  test('parses single upvote', () => {
-    const text = '<@U12345> ++';
-    const result: Vote[] = parseVote(text);
-    expect(result).toEqual([{ userId: 'U12345', action: '++' }]);
-  });
+    test('parses single upvote', () => {
+        const text = '<@U12345> ++';
+        const result: Vote[] = parseVote(text);
+        expect(result).toEqual([{userId: 'U12345', action: '++'}]);
+    });
 
-  test('parses multiple votes', () => {
-    const text = '<@U12345> ++ <@U67890> --';
-    const result: Vote[] = parseVote(text);
-    expect(result).toHaveLength(2);
-    expect(result[0].action).toBe('++');
-    expect(result[1].action).toBe('--');
-  });
+    test('parses multiple votes', () => {
+        const text = '<@U12345> ++ <@U67890> --';
+        const result: Vote[] = parseVote(text);
+        expect(result).toHaveLength(2);
+        expect(result[0].action).toBe('++');
+        expect(result[1].action).toBe('--');
+    });
 });
 ```
 

@@ -12,7 +12,7 @@ async function migrate(poolOverride?: any) {
     // Use provided pool for testing, or create a new client
     let client: any;
     let shouldCloseClient = true;
-    
+
     if (poolOverride) {
         // For testing: use the shared pool directly (no client closing)
         client = poolOverride;
@@ -33,32 +33,76 @@ async function migrate(poolOverride?: any) {
     const ddl = `
         CREATE TABLE IF NOT EXISTS leaderboard
         (
-            user_id VARCHAR(20) PRIMARY KEY,
+            user_id
+            VARCHAR
+        (
+            20
+        ) PRIMARY KEY,
             score INTEGER DEFAULT 0 NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        );
+            created_at TIMESTAMP DEFAULT NOW
+        (
+        ),
+            updated_at TIMESTAMP DEFAULT NOW
+        (
+        )
+            );
         CREATE INDEX IF NOT EXISTS idx_leaderboard_score ON leaderboard(score DESC);
 
         CREATE TABLE IF NOT EXISTS thing_leaderboard
         (
-            thing_name VARCHAR(64) PRIMARY KEY,
+            thing_name
+            VARCHAR
+        (
+            64
+        ) PRIMARY KEY,
             score INTEGER DEFAULT 0 NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        );
+            created_at TIMESTAMP DEFAULT NOW
+        (
+        ),
+            updated_at TIMESTAMP DEFAULT NOW
+        (
+        )
+            );
         CREATE INDEX IF NOT EXISTS idx_thing_leaderboard_score ON thing_leaderboard(score DESC);
 
         CREATE TABLE IF NOT EXISTS vote_history
         (
-            id SERIAL PRIMARY KEY,
-            voter_id VARCHAR(20) NOT NULL,
-            voted_user_id VARCHAR(20) NOT NULL,
-            vote_type VARCHAR(2) NOT NULL CHECK (vote_type IN ('++', '--')),
-            channel_id VARCHAR(20),
-            message_ts VARCHAR(20),
-            created_at TIMESTAMP DEFAULT NOW()
-        );
+            id
+            SERIAL
+            PRIMARY
+            KEY,
+            voter_id
+            VARCHAR
+        (
+            20
+        ) NOT NULL,
+            voted_user_id VARCHAR
+        (
+            20
+        ) NOT NULL,
+            vote_type VARCHAR
+        (
+            2
+        ) NOT NULL CHECK
+        (
+            vote_type
+            IN
+        (
+            '++',
+            '--'
+        )),
+            channel_id VARCHAR
+        (
+            20
+        ),
+            message_ts VARCHAR
+        (
+            20
+        ),
+            created_at TIMESTAMP DEFAULT NOW
+        (
+        )
+            );
         CREATE INDEX IF NOT EXISTS idx_vote_history_user ON vote_history(voted_user_id);
         CREATE INDEX IF NOT EXISTS idx_vote_history_created ON vote_history(created_at DESC);
     `;
