@@ -4,7 +4,7 @@
 
 - **Purpose**: Slack bot that maintains a karma-style leaderboard via mentions and two slash commands.
 - **Architecture**: Built with Slack Bolt (Socket Mode), PostgreSQL persistence, TypeScript runtime, Jest-based tests, Dockerfile/docker-compose for containerisation, and a Railway deployment configuration.
-- **Current Documentation**: Rich set of guides including `README.md`, `DEPLOYMENT.md`, `EXAMPLES.md`, `CONTRIBUTING.md`, `MIGRATION.md`, `ROADMAP.md`, and `TECH_DECISION.md`.
+- **Current Documentation**: Rich set of guides including `README.md`, `CONTRIBUTING.md` (at root), and documentation in `docs/` including `DEPLOYMENT.md`, `EXAMPLES.md`, `MIGRATION.md`, `ROADMAP.md`, and `TECH_DECISION.md`.
 - **Security Posture**: All external integration credentials (Slack tokens, database URL) are supplied through environment variables (`src/index.ts`, `src/storage/pool.ts`). No secrets are committed. Runtime validates Slack variables before boot. Database access flows through `getPool()` with `DATABASE_URL` configuration and optional Railway port mapping.
 
 ## Verification of Environment Variable Usage
@@ -30,7 +30,7 @@ The following milestones organise the remaining work needed for a polished publi
 2. **Database schema and migrations hardening**
    - Supply migration files for `leaderboard` and `vote_history`; include timestamps and UPSERT compatibility.
    - Add indexes on `leaderboard.user_id` and `vote_history` (`voted_user_id`, `created_at DESC`, optional `channel_id`, `message_ts`).
-   - Document `npm run migrate` in `DEPLOYMENT.md`.
+   - Document `npm run migrate` in `docs/DEPLOYMENT.md`.
    - _Acceptance_: Fresh database bootstrap succeeds; indexes support query patterns.
 3. **Idempotency and duplicate-delivery handling**
    - Protect against double-processing Slack events/messages (Socket Mode replay protection).
@@ -80,12 +80,12 @@ The following milestones organise the remaining work needed for a polished publi
 
 13. **Slack App setup deep guide**
 
-- Expand `DEPLOYMENT.md` with detailed scope listings, Socket Mode requirements, slash command setup, and visuals.
+- Expand `docs/DEPLOYMENT.md` with detailed scope listings, Socket Mode requirements, slash command setup, and visuals.
 - _Acceptance_: Slack configuration steps are unambiguous.
 
 14. **Examples expansion and help command**
 
-- Extend `EXAMPLES.md` with DM/channel/thread scenarios; implement `/help` (or `/ppbot`) command.
+- Extend `docs/EXAMPLES.md` with DM/channel/thread scenarios; implement `/help` (or `/ppbot`) command.
 - _Acceptance_: Users can discover features in-product; docs match behaviour.
 
 15. **Configuration reference**
@@ -215,8 +215,8 @@ The following milestones organise the remaining work needed for a polished publi
 
 7. **Documentation Rollout**
    - README: Quickstart + deploy badge + architecture snapshot.
-   - DEPLOYMENT.md: Platform-specific guides with screenshots or references.
-   - CONFIGURATION.md: Exhaustive env var reference.
+   - docs/DEPLOYMENT.md: Platform-specific guides with screenshots or references.
+   - CONFIGURATION.md: Exhaustive env var reference (in docs/).
    - SECURITY.md / CODE_OF_CONDUCT.md: Policies and triage.
    - CONTRIBUTING.md: Reference commit conventions, CI expectations, and migration workflow.
 

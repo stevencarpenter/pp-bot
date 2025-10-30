@@ -231,7 +231,7 @@ async function databaseOperation() {
 
 ### Migration Guide
 
-- Document breaking changes in the README.md (or create MIGRATION.md if migration instructions grow)
+- Document breaking changes in the README.md (or docs/MIGRATION.md if migration instructions grow)
 - Provide upgrade path for existing deployments
 - Include database schema changes
 
@@ -311,6 +311,6 @@ async function databaseOperation() {
 
 1. Look at existing code patterns in the repository
 2. Consult CONTRIBUTING.md for development practices
-3. Check TECH_DECISION.md for architectural decisions
+3. Check docs/TECH_DECISION.md for architectural decisions
 4. Run tests frequently to catch issues early
 5. Keep changes minimal and focused

@@ -145,7 +145,7 @@ CREATE INDEX idx_leaderboard_score ON leaderboard (score DESC);
 - Build produces valid JavaScript
 - CI/CD includes type checking
 
-**Alternative:** If choosing Python/Scala/Rust, document decision in `TECH_DECISION.md`
+**Alternative:** If choosing Python/Scala/Rust, document decision in `TECH_DECISION.md` in this directory
 
 ---
 
@@ -409,7 +409,7 @@ restartPolicyType = "ON_FAILURE"
 - **Scala:** Overkill for this use case
 - **Rust:** Excellent performance, but very high learning curve
 
-See `TECH_DECISION.md` for full analysis.
+See `TECH_DECISION.md` in this directory for full analysis.
 
 ---
 
