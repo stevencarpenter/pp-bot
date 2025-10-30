@@ -7,14 +7,16 @@ contribute effectively.
 
 ```
 pp-bot/
-├── index.js           # Main bot logic and entry point
-├── index.test.js      # Unit tests for core functionality
+├── src/               # TypeScript source code
+├── docs/              # Documentation files
+│   ├── EXAMPLES.md    # Usage examples
+│   ├── DEPLOYMENT.md  # Deployment guide
+│   └── ...            # Other documentation
 ├── package.json       # Node.js dependencies and scripts
 ├── .env.example       # Example environment variables
 ├── .gitignore         # Files to exclude from git
 ├── README.md          # Main documentation
-├── EXAMPLES.md        # Usage examples
-└── leaderboard.json   # Auto-generated leaderboard data (git-ignored)
+└── CONTRIBUTING.md    # This file
 ```
 
 ## Development Setup
@@ -89,7 +91,7 @@ If you need to change how votes are detected:
 
 1. Update the regex pattern
 2. Add tests covering the new pattern
-3. Update EXAMPLES.md with new usage examples
+3. Update docs/EXAMPLES.md with new usage examples
 
 ### Changing leaderboard storage
 
@@ -107,7 +109,7 @@ The current implementation uses a JSON file (`leaderboard.json`). To change this
 3. **Reference issues**: If fixing a bug, reference the issue number
 4. **Keep PRs focused**: One feature or fix per PR
 5. **Ensure tests pass**: All tests must pass
-6. **Update documentation**: Update README.md and EXAMPLES.md as needed
+6. **Update documentation**: Update README.md and docs/EXAMPLES.md as needed
 
 ## Testing with Slack
 
