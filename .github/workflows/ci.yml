@@ -25,7 +25,7 @@ jobs:
       DATABASE_URL: postgresql://ppbot:ppbot@localhost:5432/ppbot
       LOG_LEVEL: info
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Use Node.js 20
         uses: actions/setup-node@v6
         with:
