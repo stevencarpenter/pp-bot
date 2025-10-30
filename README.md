@@ -1,11 +1,14 @@
 # pp-bot
 
 This is a small Slack bot that manages a leaderboard of Slack users in an organization. Users can vote for each other
-using `@user ++` or `@user --` to increment or decrement their score on the leaderboard.
+using `@user ++` or `@user --` to increment or decrement their score on the leaderboard. The bot also keeps a separate
+"things" leaderboard so channels can celebrate concepts such as `@broncos ++` for a big win even when no Slack user
+with that handle exists.
 
 ## Features
 
-- **Upvote/Downvote**: Mention a user with `@username ++` or `@username --` to change their score
+- **Upvote/Downvote (Users)**: Mention a user with `@username ++` or `@username --` to change their score
+- **Celebrate Things**: Vote for non-user targets such as teams, releases, or ideas with `@thing ++` or `@thing --`
 - **Flexible Format**: Add any text or emojis after the `++` or `--` (e.g., `@user ++ great job! 🎉`)
 - **Leaderboard**: View the top scorers with the `/leaderboard` command
 - **Personal Score**: Check your own score with the `/score` command
@@ -35,9 +38,16 @@ You can vote for multiple people in one message:
 @john ++ and @jane ++ for the amazing work!
 ```
 
+You can also celebrate non-user concepts:
+
+```bash
+@broncos ++ for the comeback win!
+@release -- needs more QA time
+```
+
 ### Commands
 
-- `/leaderboard` - Display the top 10 users on the leaderboard
+- `/leaderboard` - Display the top 10 users and top 10 things on their respective leaderboards
 - `/score` - Check your current score
 
 ## Setup
@@ -120,9 +130,10 @@ npm test
 
 ### Database & Storage
 
-The current implementation uses PostgreSQL (or pg-mem in tests) with two tables:
+The current implementation uses PostgreSQL (or pg-mem in tests) with three tables:
 
 - `leaderboard(user_id PK, score, created_at, updated_at)`
+- `thing_leaderboard(thing_name PK, score, created_at, updated_at)`
 - `vote_history(id PK, voter_id, voted_user_id, vote_type, channel_id?, message_ts?, created_at)`
 
 Migrations: `npm run migrate` will create the tables on a real database.
@@ -131,18 +142,19 @@ Migrations: `npm run migrate` will create the tables on a real database.
 
 The bot listens to messages. When it detects voting syntax it:
 
-1. Parses the message (`parseVote`)
-2. Updates the user's score (`updateUserScore`) using an UPSERT
-3. Records vote history (`recordVote`)
+1. Parses the message (`parseVote`) while sanitizing any non-user vote targets
+2. Updates the appropriate leaderboard (`updateUserScore` or `updateThingScore`) using an UPSERT
+3. Records vote history for user votes (`recordVote`)
 4. Emits response messages for each action
 
-The `/leaderboard` and `/score` slash commands query the database.
+The `/leaderboard` command surfaces both leaderboards, and `/score` reports the calling user's score.
 
 ## Development Notes
 
 - Tests use an ephemeral pg-mem backed pool substitute to avoid dangling sockets.
 - Integration tests build schema via a shared `ensureSchema` helper.
 - Coverage thresholds enforce a baseline to catch regressions early.
+- Vote parsing sanitizes user and thing targets with the well-maintained [`validator`](https://github.com/validatorjs/validator.js) library before interacting with the database.
 
 ## License
 

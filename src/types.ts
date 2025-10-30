@@ -4,9 +4,12 @@ export type UserId = string;
 /** Vote action: increment (++) or decrement (--) */
 export type VoteAction = '++' | '--';
 
+export type VoteTargetType = 'user' | 'thing';
+
 /** Parsed vote from a message */
 export interface Vote {
-  userId: UserId;
+  targetId: string;
+  targetType: VoteTargetType;
   action: VoteAction;
 }
 

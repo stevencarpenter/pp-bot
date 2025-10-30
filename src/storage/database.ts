@@ -150,6 +150,32 @@ export async function updateUserScore(userId: string, delta: number): Promise<nu
   });
 }
 
+export async function updateThingScore(thingName: string, delta: number): Promise<number> {
+  return withDatabaseRetry(async () => {
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `INSERT INTO thing_leaderboard (thing_name, score, updated_at)
+           VALUES ($1, $2, NOW()) ON CONFLICT (thing_name)
+       DO
+          UPDATE SET score = thing_leaderboard.score + $2, updated_at = NOW()
+              RETURNING score`,
+      [thingName, delta]
+    );
+    return rows[0].score as number;
+  });
+}
+
+export async function getThingScore(thingName: string): Promise<number> {
+  return withDatabaseRetry(async () => {
+    const pool = getPool();
+    const { rows } = await pool.query('SELECT score FROM thing_leaderboard WHERE thing_name = $1', [
+      thingName,
+    ]);
+    if (rows.length === 0) return 0;
+    return rows[0].score as number;
+  });
+}
+
 export async function getTopUsers(limit: number): Promise<{ user_id: string; score: number }[]> {
   return withDatabaseRetry(async () => {
     const pool = getPool();
@@ -161,13 +187,31 @@ export async function getTopUsers(limit: number): Promise<{ user_id: string; sco
   });
 }
 
+export async function getTopThings(
+  limit: number
+): Promise<{ thing_name: string; score: number }[]> {
+  return withDatabaseRetry(async () => {
+    const pool = getPool();
+    const { rows } = await pool.query(
+      'SELECT thing_name, score FROM thing_leaderboard ORDER BY score DESC LIMIT $1',
+      [limit]
+    );
+    return rows as { thing_name: string; score: number }[];
+  });
+}
+
+interface RecordVoteOptions {
+  channelId?: string;
+  messageTs?: string;
+}
+
 export async function recordVote(
   voterId: string,
   votedUserId: string,
   voteType: VoteAction,
-  channelId?: string,
-  messageTs?: string
+  options: RecordVoteOptions = {}
 ): Promise<void> {
+  const { channelId, messageTs } = options;
   await withDatabaseRetry(async () => {
     const pool = getPool();
     await pool.query(

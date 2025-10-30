@@ -5,29 +5,35 @@ import { updateLeaderboard } from '../utils/leaderboard';
 
 describe('parseVote (comprehensive)', () => {
   test('single ++ vote', () => {
-    expect(parseVote('<@U12345678> ++')).toEqual([{ userId: 'U12345678', action: '++' }]);
+    expect(parseVote('<@U12345678> ++')).toEqual([
+      { targetId: 'U12345678', targetType: 'user', action: '++' },
+    ]);
   });
   test('single -- vote', () => {
-    expect(parseVote('<@U12345678> --')).toEqual([{ userId: 'U12345678', action: '--' }]);
+    expect(parseVote('<@U12345678> --')).toEqual([
+      { targetId: 'U12345678', targetType: 'user', action: '--' },
+    ]);
   });
   test('vote with trailing text', () => {
     expect(parseVote('<@U12345678> ++ for being awesome!')).toEqual([
-      { userId: 'U12345678', action: '++' },
+      { targetId: 'U12345678', targetType: 'user', action: '++' },
     ]);
   });
   test('vote with emojis after', () => {
     expect(parseVote('<@U12345678> ++ 🎉 🎊 great job!')).toEqual([
-      { userId: 'U12345678', action: '++' },
+      { targetId: 'U12345678', targetType: 'user', action: '++' },
     ]);
   });
   test('multiple votes in one line', () => {
     expect(parseVote('<@U12345678> ++ and <@U87654321> --')).toEqual([
-      { userId: 'U12345678', action: '++' },
-      { userId: 'U87654321', action: '--' },
+      { targetId: 'U12345678', targetType: 'user', action: '++' },
+      { targetId: 'U87654321', targetType: 'user', action: '--' },
     ]);
   });
   test('vote without space before ++', () => {
-    expect(parseVote('<@U12345678>++')).toEqual([{ userId: 'U12345678', action: '++' }]);
+    expect(parseVote('<@U12345678>++')).toEqual([
+      { targetId: 'U12345678', targetType: 'user', action: '++' },
+    ]);
   });
   test('ignores text with mention but no vote', () => {
     expect(parseVote('Hello <@U12345678> how are you?')).toEqual([]);

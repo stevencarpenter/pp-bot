@@ -13,6 +13,13 @@ CREATE TABLE IF NOT EXISTS leaderboard (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS thing_leaderboard (
+    thing_name VARCHAR(64) PRIMARY KEY,
+    score INTEGER DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS vote_history (
     id SERIAL PRIMARY KEY,
     voter_id VARCHAR(20) NOT NULL,

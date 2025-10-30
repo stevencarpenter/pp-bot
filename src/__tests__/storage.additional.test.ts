@@ -9,6 +9,7 @@ describe('additional storage coverage', () => {
   beforeEach(async () => {
     await pool.query('DELETE FROM vote_history');
     await pool.query('DELETE FROM leaderboard');
+    await pool.query('DELETE FROM thing_leaderboard');
   });
 
   test('getUserScore returns 0 for non-existent user', async () => {

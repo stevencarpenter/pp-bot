@@ -1,8 +1,11 @@
 import {
   getRecentVotes,
+  getThingScore,
+  getTopThings,
   getTopUsers,
   getUserScore,
   recordVote,
+  updateThingScore,
   updateUserScore,
 } from '../storage/database';
 import { ensureSchema } from './helpers/schema';
@@ -31,8 +34,20 @@ describe('pg-mem storage operations', () => {
     }
   });
 
+  test('thing leaderboard operations', async () => {
+    const first = await updateThingScore('broncos', 1);
+    expect(first).toBe(1);
+    await updateThingScore('broncos', 4);
+    await updateThingScore('avalanche', 2);
+    const score = await getThingScore('broncos');
+    expect(score).toBe(5);
+    const topThings = await getTopThings(5);
+    expect(topThings.length).toBeGreaterThanOrEqual(2);
+    expect(topThings[0].score).toBeGreaterThanOrEqual(topThings[1].score);
+  });
+
   test('recordVote and getRecentVotes', async () => {
-    await recordVote('U_VOTER', 'U_Y', '++', 'C1', '123');
+    await recordVote('U_VOTER', 'U_Y', '++', { channelId: 'C1', messageTs: '123' });
     const votes = await getRecentVotes('U_Y');
     expect(votes[0]).toMatchObject({ votedUserId: 'U_Y', voteType: '++' });
     expect(votes[0].createdAt).toBeInstanceOf(Date);

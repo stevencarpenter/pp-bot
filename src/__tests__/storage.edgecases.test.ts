@@ -9,6 +9,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   await pool.query('DELETE FROM vote_history');
   await pool.query('DELETE FROM leaderboard');
+  await pool.query('DELETE FROM thing_leaderboard');
 });
 
 describe('storage edge cases', () => {

@@ -12,5 +12,6 @@ describe('migration script', () => {
     // Basic existence checks
     await expect(pool.query('SELECT * FROM leaderboard')).resolves.toBeTruthy();
     await expect(pool.query('SELECT * FROM vote_history')).resolves.toBeTruthy();
+    await expect(pool.query('SELECT * FROM thing_leaderboard')).resolves.toBeTruthy();
   });
 });
