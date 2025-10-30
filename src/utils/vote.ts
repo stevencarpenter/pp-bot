@@ -1,10 +1,10 @@
 import { Vote, VoteAction } from '../types';
 import { sanitizeThingName, sanitizeUserId } from './sanitize';
 
-const USER_VOTE_REGEX = /<@([A-Za-z0-9]+)>\s*(\+\+|--)/g;
-const THING_VOTE_REGEX = /(^|[\s,.!?()[\]{}"'`])@([A-Za-z0-9][A-Za-z0-9 _\-.']{0,63})\s*(\+\+|--)/g;
 
 export function parseVote(text: string): Vote[] {
+  const USER_VOTE_REGEX = /<@([A-Za-z0-9]+)>\s*(\+\+|--)/g;
+  const THING_VOTE_REGEX = /(^|[\s,.!?()[\]{}"'`])@([A-Za-z0-9][A-Za-z0-9 _\-.']{0,63})\s*(\+\+|--)/g;
   const matches: { index: number; vote: Vote }[] = [];
   let match: RegExpExecArray | null;
 
