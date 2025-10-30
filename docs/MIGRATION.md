@@ -20,7 +20,7 @@
 
 ## Executive Summary
 
-Based on the technology analysis (see `TECH_DECISION.md`), **TypeScript is the recommended migration path** for pp-bot
+Based on the technology analysis (see `TECH_DECISION.md` in this directory), **TypeScript is the recommended migration path** for pp-bot
 due to:
 
 - ✅ Minimal migration effort (1-2 days)
@@ -736,7 +736,7 @@ Choose Rust if:
 
 ## Next Steps
 
-1. **Review TECH_DECISION.md** for detailed analysis
+1. **Review TECH_DECISION.md** in this directory for detailed analysis
 2. **Make a decision** (TypeScript recommended)
 3. **Follow migration guide** for chosen language
 4. **Test thoroughly** before deploying
