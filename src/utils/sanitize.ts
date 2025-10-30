@@ -24,7 +24,7 @@ export function sanitizeThingName(name: string): string | null {
   if (!trimmed) return null;
   const normalizedWhitespace = trimmed.replace(/\s+/g, ' ');
   const sanitized = validator.whitelist(normalizedWhitespace, THING_WHITELIST);
-  const collapsed = sanitized.replace(/\s+/g, ' ').trim();
+  const collapsed = sanitized.trim();
   if (!collapsed) return null;
   const limited = collapsed.slice(0, MAX_THING_LENGTH);
   return limited.toLowerCase();
