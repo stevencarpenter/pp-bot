@@ -3,9 +3,14 @@
 ## Project Overview
 
 - **Purpose**: Slack bot that maintains a karma-style leaderboard via mentions and two slash commands.
-- **Architecture**: Built with Slack Bolt (Socket Mode), PostgreSQL persistence, TypeScript runtime, Jest-based tests, Dockerfile/docker-compose for containerisation, and a Railway deployment configuration.
-- **Current Documentation**: Rich set of guides including `README.md`, `CONTRIBUTING.md` (at root), and documentation in `docs/` including `DEPLOYMENT.md`, `EXAMPLES.md`, `MIGRATION.md`, `ROADMAP.md`, and `TECH_DECISION.md`.
-- **Security Posture**: All external integration credentials (Slack tokens, database URL) are supplied through environment variables (`src/index.ts`, `src/storage/pool.ts`). No secrets are committed. Runtime validates Slack variables before boot. Database access flows through `getPool()` with `DATABASE_URL` configuration and optional Railway port mapping.
+- **Architecture**: Built with Slack Bolt (Socket Mode), PostgreSQL persistence, TypeScript runtime, Jest-based tests,
+  Dockerfile/docker-compose for containerisation, and a Railway deployment configuration.
+- **Current Documentation**: Rich set of guides including `README.md`, `CONTRIBUTING.md` (at root), and documentation in
+  `docs/` including `DEPLOYMENT.md`, `EXAMPLES.md`, `MIGRATION.md`, `ROADMAP.md`, and `TECH_DECISION.md`.
+- **Security Posture**: All external integration credentials (Slack tokens, database URL) are supplied through
+  environment variables (`src/index.ts`, `src/storage/pool.ts`). No secrets are committed. Runtime validates Slack
+  variables before boot. Database access flows through `getPool()` with `DATABASE_URL` configuration and optional
+  Railway port mapping.
 
 ## Verification of Environment Variable Usage
 
@@ -15,21 +20,26 @@
 | PostgreSQL        | `src/storage/pool.ts`, `src/storage/database.ts` | Pool initialised from `DATABASE_URL`; helper functions (`getTopUsers`, `recordVote`, etc.) rely on the pool.     |
 | Runtime port      | `src/index.ts`                                   | Uses `PORT` or `RAILWAY_PORT` for compatibility with Railway and generic containers.                             |
 
-Conclusion: Environment variable handling meets expectations—no hard-coded secrets or credentials exist in the repository.
+Conclusion: Environment variable handling meets expectations—no hard-coded secrets or credentials exist in the
+repository.
 
 ## Release Milestones and Issues
 
-The following milestones organise the remaining work needed for a polished public launch. Each issue contains acceptance criteria and recommended labels (e.g., `type:bug`, `type:enhancement`, `type:docs`, `type:infra`, `security`). Ordering implies dependency priority within a milestone.
+The following milestones organise the remaining work needed for a polished public launch. Each issue contains acceptance
+criteria and recommended labels (e.g., `type:bug`, `type:enhancement`, `type:docs`, `type:infra`, `security`). Ordering
+implies dependency priority within a milestone.
 
 ### Milestone A – Public Release Readiness (Core Hygiene)
 
 1. **Audit and lock down environment variables**
    - Ensure `getPool()` reads `DATABASE_URL`, configures SSL when required, and warns in production if missing.
-   - Introduce runtime env validation (e.g., `zod`, `envalid`) for `LOG_LEVEL`, `NODE_ENV`, Slack tokens, and `DATABASE_URL`.
+   - Introduce runtime env validation (e.g., `zod`, `envalid`) for `LOG_LEVEL`, `NODE_ENV`, Slack tokens, and
+     `DATABASE_URL`.
    - _Acceptance_: Startup fails clearly when required env vars are absent; documentation reflects the canonical list.
 2. **Database schema and migrations hardening**
    - Supply migration files for `leaderboard` and `vote_history`; include timestamps and UPSERT compatibility.
-   - Add indexes on `leaderboard.user_id` and `vote_history` (`voted_user_id`, `created_at DESC`, optional `channel_id`, `message_ts`).
+   - Add indexes on `leaderboard.user_id` and `vote_history` (`voted_user_id`, `created_at DESC`, optional
+     `channel_id`, `message_ts`).
    - Document `npm run migrate` in `docs/DEPLOYMENT.md`.
    - _Acceptance_: Fresh database bootstrap succeeds; indexes support query patterns.
 3. **Idempotency and duplicate-delivery handling**
@@ -55,7 +65,8 @@ The following milestones organise the remaining work needed for a polished publi
 ### Milestone B – CI/CD and Quality Gates
 
 8. **Node.js CI workflow**
-   - GitHub Actions pipeline running lint, type-check, test (with coverage threshold), and build on push/PR for Node 18/20.
+   - GitHub Actions pipeline running lint, type-check, test (with coverage threshold), and build on push/PR for Node
+     18/20.
    - Cache dependencies and upload coverage artifacts.
    - _Acceptance_: Workflow required on `main`; failing checks block merges.
 9. **Dependency and security automation**
@@ -75,7 +86,8 @@ The following milestones organise the remaining work needed for a polished publi
 
 12. **README launch upgrade**
 
-- Add quick start, table of contents, architecture diagram, FAQ, limitations, support channels, and a Railway deploy badge.
+- Add quick start, table of contents, architecture diagram, FAQ, limitations, support channels, and a Railway deploy
+  badge.
 - _Acceptance_: New user can deploy within 15 minutes using README alone.
 
 13. **Slack App setup deep guide**
@@ -183,7 +195,8 @@ The following milestones organise the remaining work needed for a polished publi
 **Title**: RFC – One-Click Deploy for PP Bot (Railway baseline, optional multi-platform support)
 
 1. **Background & Goals**
-   - Deliver a deployment experience where users click a button, supply Slack credentials, and receive a running bot with PostgreSQL.
+   - Deliver a deployment experience where users click a button, supply Slack credentials, and receive a running bot
+     with PostgreSQL.
    - Socket Mode removes public ingress requirements; focus on provisioning Postgres and running migrations.
 
 2. **Platform Evaluation**
@@ -193,8 +206,11 @@ The following milestones organise the remaining work needed for a polished publi
    - **AWS & generic VPS**: More complex; deprioritised for initial release.
 
 3. **Railway Baseline Proposal**
-   - `railway.json` defines app + Postgres services, required vars (`SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `SLACK_SIGNING_SECRET`, `LOG_LEVEL`, `NODE_ENV`), automatic `DATABASE_URL` injection, and post-deploy `npm run migrate`.
-   - User flow: Click badge → create Railway project → provide secrets → build runs → migrations execute → bot connects via Socket Mode.
+   - `railway.json` defines app + Postgres services, required vars (`SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`,
+     `SLACK_SIGNING_SECRET`, `LOG_LEVEL`, `NODE_ENV`), automatic `DATABASE_URL` injection, and post-deploy
+     `npm run migrate`.
+   - User flow: Click badge → create Railway project → provide secrets → build runs → migrations execute → bot connects
+     via Socket Mode.
    - Security: Encourage token rotation and least privilege scopes as documented.
 
 4. **Implementation Notes**

@@ -11,7 +11,8 @@ This directory contains detailed documentation for the pp-bot project.
 ### Deployment & Operations
 
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Comprehensive guide for deploying to Railway.com and other platforms
-- **[DATABASE_CONNECTION_FIX.md](DATABASE_CONNECTION_FIX.md)** - Technical documentation for database connection issues in containerized environments
+- **[DATABASE_CONNECTION_FIX.md](DATABASE_CONNECTION_FIX.md)** - Technical documentation for database connection issues
+  in containerized environments
 
 ### Development & Migration
 
