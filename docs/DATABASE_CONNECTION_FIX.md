@@ -14,14 +14,16 @@ connect ECONNREFUSED fd12:1060:6cd6:1:2000:94:68f7:9724:5432
 ## Root Causes
 
 1. **No startup health check**: The application started immediately without waiting for the database to be ready
-2. **Insufficient connection timeout**: The 5-second connection timeout was too short for cloud environments where network initialization can take longer
+2. **Insufficient connection timeout**: The 5-second connection timeout was too short for cloud environments where
+   network initialization can take longer
 3. **No retry logic**: A single connection failure would cause the entire application to fail
 
 ## Solutions Implemented
 
 ### 1. Increased Connection Timeout (src/db.ts)
 
-Changed `connectionTimeoutMillis` from 5000ms to 20000ms (20 seconds) to accommodate slower network initialization in cloud environments.
+Changed `connectionTimeoutMillis` from 5000ms to 20000ms (20 seconds) to accommodate slower network initialization in
+cloud environments.
 
 ```typescript
 const p = new Pool({

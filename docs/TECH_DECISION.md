@@ -13,7 +13,8 @@
 **Recommendation: TypeScript** (Score: 51/55)
 
 After comprehensive analysis of JavaScript, TypeScript, Python, Scala, and Rust for the pp-bot Slack bot application, \*
-\*TypeScript emerges as the clear winner\*\* with a score of 51 out of 55 possible points across all evaluation criteria.
+\*TypeScript emerges as the clear winner\*\* with a score of 51 out of 55 possible points across all evaluation
+criteria.
 
 ### Key Findings
 

@@ -12,7 +12,7 @@ async function migrate(poolOverride?: any) {
     // Use provided pool for testing, or create a new client
     let client: any;
     let shouldCloseClient = true;
-    
+
     if (poolOverride) {
         // For testing: use the shared pool directly (no client closing)
         client = poolOverride;
@@ -47,6 +47,23 @@ async function migrate(poolOverride?: any) {
         )
             );
         CREATE INDEX IF NOT EXISTS idx_leaderboard_score ON leaderboard(score DESC);
+
+        CREATE TABLE IF NOT EXISTS thing_leaderboard
+        (
+            thing_name
+            VARCHAR
+        (
+            64
+        ) PRIMARY KEY,
+            score INTEGER DEFAULT 0 NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW
+        (
+        ),
+            updated_at TIMESTAMP DEFAULT NOW
+        (
+        )
+            );
+        CREATE INDEX IF NOT EXISTS idx_thing_leaderboard_score ON thing_leaderboard(score DESC);
 
         CREATE TABLE IF NOT EXISTS vote_history
         (

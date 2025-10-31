@@ -62,9 +62,39 @@ This file demonstrates how the pp-bot responds to various message patterns.
 @bob's score decreased to 2
 ```
 
+## Voting for Things
+
+### Example 5: Celebrate a non-user target
+
+**User message:**
+
+```
+@broncos ++ for the big win!
+```
+
+**Bot response:**
+
+```
+Score for *broncos* increased to 1
+```
+
+### Example 6: Downvote a thing
+
+**User message:**
+
+```
+@deploy -- needs fixes
+```
+
+**Bot response:**
+
+```
+Score for *deploy* decreased to -1
+```
+
 ## Multiple Votes
 
-### Example 5: Multiple votes in one message
+### Example 7: Multiple votes in one message
 
 **User message:**
 
@@ -81,7 +111,7 @@ This file demonstrates how the pp-bot responds to various message patterns.
 
 ## Self-Vote Prevention
 
-### Example 6: Trying to vote for yourself
+### Example 8: Trying to vote for yourself
 
 **User message:** (from user @john)
 
@@ -97,7 +127,7 @@ This file demonstrates how the pp-bot responds to various message patterns.
 
 ## Commands
 
-### Example 7: View leaderboard
+### Example 9: View leaderboard
 
 **User message:**
 
@@ -110,14 +140,19 @@ This file demonstrates how the pp-bot responds to various message patterns.
 ```
 🏆 Leaderboard 🏆
 
-🥇 @alice: 6
-🥈 @bob: 2
-🥉 @john: 2
-4. @charlie: 1
-5. @dave: -1
+*Users*
+🥇 <@alice>: 6
+🥈 <@bob>: 2
+🥉 <@john>: 2
+4. <@charlie>: 1
+5. <@dave>: -1
+
+*Things*
+🥇 *broncos*: 4
+🥈 *deploy*: -1
 ```
 
-### Example 8: Check your score
+### Example 10: Check your score
 
 **User message:**
 
@@ -133,7 +168,7 @@ This file demonstrates how the pp-bot responds to various message patterns.
 
 ## Edge Cases
 
-### Example 9: No space before ++
+### Example 11: No space before ++
 
 **User message:**
 
@@ -147,7 +182,7 @@ This file demonstrates how the pp-bot responds to various message patterns.
 @charlie's score increased to 1
 ```
 
-### Example 10: Mixed text and votes
+### Example 12: Mixed text and votes
 
 **User message:**
 

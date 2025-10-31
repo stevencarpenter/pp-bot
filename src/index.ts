@@ -1,7 +1,14 @@
 import dotenv from 'dotenv';
 import { App, LogLevel } from '@slack/bolt';
 import { parseVote } from './utils/vote';
-import { getTopUsers, getUserScore, recordVote, updateUserScore } from './storage/database';
+import {
+  getTopThings,
+  getTopUsers,
+  getUserScore,
+  recordVote,
+  updateThingScore,
+  updateUserScore,
+} from './storage/database';
 import { waitForDatabase } from './db';
 
 dotenv.config();
@@ -48,21 +55,25 @@ export function createApp() {
       if (votes.length === 0) return;
       const results: string[] = [];
       for (const vote of votes) {
-        if (vote.userId === (message as any).user) {
-          results.push(`<@${vote.userId}> cannot vote for themselves!`);
+        const delta = vote.action === '++' ? 1 : -1;
+        if (vote.targetType === 'user') {
+          if (vote.targetId === (message as any).user) {
+            results.push(`<@${vote.targetId}> cannot vote for themselves!`);
+            continue;
+          }
+          const newScore = await updateUserScore(vote.targetId, delta);
+          await recordVote((message as any).user, vote.targetId, vote.action, {
+            channelId: (message as any).channel,
+            messageTs: (message as any).ts,
+          });
+          const actionWord = vote.action === '++' ? 'increased' : 'decreased';
+          results.push(`<@${vote.targetId}>'s score ${actionWord} to ${newScore}`);
           continue;
         }
-        const delta = vote.action === '++' ? 1 : -1;
-        const newScore = await updateUserScore(vote.userId, delta);
-        await recordVote(
-          (message as any).user,
-          vote.userId,
-          vote.action,
-          (message as any).channel,
-          (message as any).ts
-        );
+
+        const newScore = await updateThingScore(vote.targetId, delta);
         const actionWord = vote.action === '++' ? 'increased' : 'decreased';
-        results.push(`<@${vote.userId}>'s score ${actionWord} to ${newScore}`);
+        results.push(`Score for *${vote.targetId}* ${actionWord} to ${newScore}`);
       }
       if (results.length) await say(results.join('\n'));
     } catch (err) {
@@ -74,17 +85,33 @@ export function createApp() {
   app.command('/leaderboard', async ({ ack, say }) => {
     await ack();
     try {
-      const entries = await getTopUsers(10);
-      if (entries.length === 0) {
-        await say('The leaderboard is empty. Start voting with @user ++ or @user --');
+      const [userEntries, thingEntries] = await Promise.all([getTopUsers(10), getTopThings(10)]);
+      if (userEntries.length === 0 && thingEntries.length === 0) {
+        await say('The leaderboard is empty. Start voting with @user ++, @user --, or @thing ++');
         return;
       }
       let response = '*🏆 Leaderboard 🏆*\n\n';
-      entries.forEach(({ user_id, score }, index) => {
-        const medal =
-          index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-        response += `${medal} <@${user_id}>: ${score}\n`;
-      });
+      if (userEntries.length > 0) {
+        response += '*Users*\n';
+        userEntries.forEach(({ user_id, score }, index) => {
+          const medal =
+            index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+          response += `${medal} <@${user_id}>: ${score}\n`;
+        });
+      } else {
+        response += '_No user votes yet._\n';
+      }
+
+      if (thingEntries.length > 0) {
+        response += '\n*Things*\n';
+        thingEntries.forEach(({ thing_name, score }, index) => {
+          const bullet =
+            index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+          response += `${bullet} *${thing_name}*: ${score}\n`;
+        });
+      } else {
+        response += '\n_No thing votes yet._\n';
+      }
       await say(response);
     } catch (e) {
       console.error('Failed to fetch leaderboard:', e);

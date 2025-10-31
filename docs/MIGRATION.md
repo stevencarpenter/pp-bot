@@ -20,7 +20,8 @@
 
 ## Executive Summary
 
-Based on the technology analysis (see `TECH_DECISION.md` in this directory), **TypeScript is the recommended migration path** for pp-bot
+Based on the technology analysis (see `TECH_DECISION.md` in this directory), **TypeScript is the recommended migration
+path** for pp-bot
 due to:
 
 - ✅ Minimal migration effort (1-2 days)
