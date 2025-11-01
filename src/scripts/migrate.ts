@@ -30,8 +30,9 @@ async function migrate(poolOverride?: any) {
         });
     }
 
-    // prettier-ignore
-    const ddl = `
+    const ddl =
+      // prettier-ignore
+      `
         CREATE TABLE IF NOT EXISTS leaderboard (
             user_id VARCHAR(20) PRIMARY KEY,
             score INTEGER DEFAULT 0 NOT NULL,
