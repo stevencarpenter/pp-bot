@@ -39,7 +39,7 @@
     "@types/pg": "^8.15.5",
     "@types/validator": "^13.15.4",
     "@typescript-eslint/eslint-plugin": "7.18.0",
-    "@typescript-eslint/parser": "7.18.0",
+    "@typescript-eslint/parser": "8.46.3",
     "eslint": "8.57.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.29.0",
