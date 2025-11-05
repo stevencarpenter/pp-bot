@@ -21,7 +21,7 @@ describe('Thing leaderboard integration', () => {
     const score2 = await updateThingScore('twinkies', 1);
     expect(score2).toBe(2);
 
-    const score3 = await updateThingScore('broncos', 1);
+    const score3 = await updateThingScore('nuggets', 1);
     expect(score3).toBe(1);
   });
 
