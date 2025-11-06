@@ -3,7 +3,7 @@
  */
 
 import { createApp, start } from '../index';
-import { pool } from '../db';
+import { getPool } from '../storage/pool';
 import migrate from '../scripts/migrate';
 
 // Mock the migrate function
@@ -62,7 +62,7 @@ describe('Bot startup', () => {
 
       // Verify migration was called with pool
       expect(mockMigrate).toHaveBeenCalledTimes(1);
-      expect(mockMigrate).toHaveBeenCalledWith(pool);
+      expect(mockMigrate).toHaveBeenCalledWith(getPool());
       expect(console.log).toHaveBeenCalledWith('Running database migrations...');
       expect(console.log).toHaveBeenCalledWith('Database migrations complete');
     });

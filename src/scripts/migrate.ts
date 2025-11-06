@@ -79,7 +79,7 @@ async function migrate(poolOverride?: Pool): Promise<boolean> {
             if (attempt === maxAttempts) {
                 logger.error('Failed to connect to database after retries:', e.message);
                 if (!poolOverride) {
-                    // CLI or test usage without pool - use process.exit
+                    // CLI usage without pool - use process.exit
                     process.exit(1);
                 }
                 // Programmatic usage with pool - return false
