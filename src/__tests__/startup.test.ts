@@ -5,15 +5,25 @@
 import { createApp, start } from '../index';
 import { getPool } from '../storage/pool';
 import migrate from '../scripts/migrate';
+import logger from '../logger';
 
 // Mock the migrate function
 jest.mock('../scripts/migrate');
 const mockMigrate = migrate as jest.MockedFunction<typeof migrate>;
 
+// Mock the logger
+jest.mock('../logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
+
 describe('Bot startup', () => {
   const originalEnv = { ...process.env };
-  const originalConsoleLog = console.log;
-  const originalConsoleError = console.error;
 
   beforeEach(() => {
     // Set up test environment with pgmem URL
@@ -23,19 +33,13 @@ describe('Bot startup', () => {
     process.env.SLACK_APP_TOKEN = 'xapp-test-token';
     process.env.LOG_LEVEL = 'error'; // Suppress logs during tests
 
-    // Mock console methods to reduce noise
-    console.log = jest.fn();
-    console.error = jest.fn();
-
-    // Reset migrate mock
+    // Reset mocks
+    jest.clearAllMocks();
     mockMigrate.mockReset();
   });
 
   afterEach(() => {
     process.env = { ...originalEnv };
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
-    jest.clearAllMocks();
   });
 
   describe('createApp', () => {
@@ -63,8 +67,8 @@ describe('Bot startup', () => {
       // Verify migration was called with pool
       expect(mockMigrate).toHaveBeenCalledTimes(1);
       expect(mockMigrate).toHaveBeenCalledWith(getPool());
-      expect(console.log).toHaveBeenCalledWith('Running database migrations...');
-      expect(console.log).toHaveBeenCalledWith('Database migrations complete');
+      expect(logger.info).toHaveBeenCalledWith('Running database migrations...');
+      expect(logger.info).toHaveBeenCalledWith('Database migrations complete');
     });
 
     test('should skip migrations when DATABASE_URL is not set', async () => {
@@ -83,7 +87,7 @@ describe('Bot startup', () => {
 
       // Verify migration was NOT called
       expect(mockMigrate).not.toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith('Skipping migrations - DATABASE_URL not set');
+      expect(logger.info).toHaveBeenCalledWith('Skipping migrations - DATABASE_URL not set');
     });
 
     test('should handle migration failure and exit', async () => {
@@ -97,7 +101,7 @@ describe('Bot startup', () => {
 
       // Verify error handling
       expect(mockMigrate).toHaveBeenCalledTimes(1);
-      expect(console.error).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         'Failed to start app:',
         expect.objectContaining({
           message: 'Database migration failed',
@@ -120,7 +124,7 @@ describe('Bot startup', () => {
 
       // Verify error handling
       expect(mockMigrate).toHaveBeenCalledTimes(1);
-      expect(console.error).toHaveBeenCalledWith('Failed to start app:', migrationError);
+      expect(logger.error).toHaveBeenCalledWith('Failed to start app:', migrationError);
       expect(mockExit).toHaveBeenCalledWith(1);
 
       mockExit.mockRestore();

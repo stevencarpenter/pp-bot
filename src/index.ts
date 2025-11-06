@@ -12,6 +12,7 @@ import {
 import { waitForDatabase } from './db';
 import { getPool } from './storage/pool';
 import migrate from './scripts/migrate';
+import logger from './logger';
 
 dotenv.config();
 
@@ -144,29 +145,29 @@ export function createApp() {
 export async function start() {
   try {
     // Wait for database to be ready before starting the app
-    console.log('Waiting for database connection...');
+    logger.info('Waiting for database connection...');
     await waitForDatabase(15, 2000); // 15 retries with 2s initial delay
-    console.log('Database is ready');
+    logger.info('Database is ready');
 
     // Run migrations to ensure tables exist (if DATABASE_URL is set)
     if (process.env.DATABASE_URL) {
-      console.log('Running database migrations...');
+      logger.info('Running database migrations...');
       const pool = getPool();
       const migrationSuccess = await migrate(pool);
       if (!migrationSuccess) {
         throw new Error('Database migration failed');
       }
-      console.log('Database migrations complete');
+      logger.info('Database migrations complete');
     } else {
-      console.log('Skipping migrations - DATABASE_URL not set');
+      logger.info('Skipping migrations - DATABASE_URL not set');
     }
 
     const app = createApp();
     const port = process.env.PORT || process.env.RAILWAY_PORT || 3000;
     await app.start(port);
-    console.log(`⚡️ Slack bot is running on port ${port}`);
+    logger.info(`⚡️ Slack bot is running on port ${port}`);
   } catch (e) {
-    console.error('Failed to start app:', e);
+    logger.error('Failed to start app:', e);
     process.exit(1);
   }
 }
