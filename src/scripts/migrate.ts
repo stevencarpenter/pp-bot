@@ -1,8 +1,8 @@
 #!/usr/bin/env ts-node
-import {Client} from 'pg';
+import {Client, Pool} from 'pg';
 import logger from '../logger';
 
-async function migrate(poolOverride?: any): Promise<boolean> {
+async function migrate(poolOverride?: Pool): Promise<boolean> {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
         logger.error('DATABASE_URL not set. Aborting migrations.');
