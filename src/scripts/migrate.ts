@@ -36,36 +36,39 @@ async function migrate(poolOverride?: Pool): Promise<boolean> {
     }
 
     const ddl =
-      // prettier-ignore
-      `
-        CREATE TABLE IF NOT EXISTS leaderboard (
-            user_id VARCHAR(20) PRIMARY KEY,
-            score INTEGER DEFAULT 0 NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        );
-        CREATE INDEX IF NOT EXISTS idx_leaderboard_score ON leaderboard(score DESC);
+        // prettier-ignore
+        `
+            CREATE TABLE IF NOT EXISTS leaderboard
+            (
+                user_id    VARCHAR(20) PRIMARY KEY,
+                score      INTEGER   DEFAULT 0 NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS idx_leaderboard_score ON leaderboard (score DESC);
 
-        CREATE TABLE IF NOT EXISTS thing_leaderboard (
-            thing_name VARCHAR(64) PRIMARY KEY,
-            score INTEGER DEFAULT 0 NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        );
-        CREATE INDEX IF NOT EXISTS idx_thing_leaderboard_score ON thing_leaderboard(score DESC);
+            CREATE TABLE IF NOT EXISTS thing_leaderboard
+            (
+                thing_name VARCHAR(64) PRIMARY KEY,
+                score      INTEGER   DEFAULT 0 NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS idx_thing_leaderboard_score ON thing_leaderboard (score DESC);
 
-        CREATE TABLE IF NOT EXISTS vote_history (
-            id SERIAL PRIMARY KEY,
-            voter_id VARCHAR(20) NOT NULL,
-            voted_user_id VARCHAR(20) NOT NULL,
-            vote_type VARCHAR(2) NOT NULL CHECK (vote_type IN ('++', '--')),
-            channel_id VARCHAR(20),
-            message_ts VARCHAR(20),
-            created_at TIMESTAMP DEFAULT NOW()
-        );
-        CREATE INDEX IF NOT EXISTS idx_vote_history_user ON vote_history(voted_user_id);
-        CREATE INDEX IF NOT EXISTS idx_vote_history_created ON vote_history(created_at DESC);
-    `;
+            CREATE TABLE IF NOT EXISTS vote_history
+            (
+                id            SERIAL PRIMARY KEY,
+                voter_id      VARCHAR(20) NOT NULL,
+                voted_user_id VARCHAR(20) NOT NULL,
+                vote_type     VARCHAR(2)  NOT NULL CHECK (vote_type IN ('++', '--')),
+                channel_id    VARCHAR(20),
+                message_ts    VARCHAR(20),
+                created_at    TIMESTAMP DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS idx_vote_history_user ON vote_history (voted_user_id);
+            CREATE INDEX IF NOT EXISTS idx_vote_history_created ON vote_history (created_at DESC);
+        `;
 
     const maxAttempts = 10;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
