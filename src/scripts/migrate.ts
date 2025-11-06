@@ -7,7 +7,7 @@ async function migrate(poolOverride?: Pool): Promise<boolean> {
     if (!connectionString) {
         logger.error('DATABASE_URL not set. Aborting migrations.');
         if (!poolOverride) {
-            // CLI or test usage without pool - use process.exit
+            // CLI usage without pool - use process.exit
             process.exit(1);
         }
         // Programmatic usage with pool - return false
