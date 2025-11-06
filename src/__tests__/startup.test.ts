@@ -22,11 +22,11 @@ describe('Bot startup', () => {
     process.env.SLACK_SIGNING_SECRET = 'test-secret';
     process.env.SLACK_APP_TOKEN = 'xapp-test-token';
     process.env.LOG_LEVEL = 'error'; // Suppress logs during tests
-    
+
     // Mock console methods to reduce noise
     console.log = jest.fn();
     console.error = jest.fn();
-    
+
     // Reset migrate mock
     mockMigrate.mockReset();
   });
@@ -49,7 +49,7 @@ describe('Bot startup', () => {
     test('should run migrations when DATABASE_URL is set', async () => {
       // Mock successful migration
       mockMigrate.mockResolvedValue(true);
-      
+
       // Mock app.start to prevent actual Slack connection
       const mockAppStart = jest.fn().mockResolvedValue(undefined);
       jest.spyOn(require('@slack/bolt'), 'App').mockImplementation(() => ({
@@ -70,7 +70,7 @@ describe('Bot startup', () => {
     test('should skip migrations when DATABASE_URL is not set', async () => {
       delete process.env.DATABASE_URL;
       mockMigrate.mockResolvedValue(true);
-      
+
       // Mock app.start to prevent actual Slack connection
       const mockAppStart = jest.fn().mockResolvedValue(undefined);
       jest.spyOn(require('@slack/bolt'), 'App').mockImplementation(() => ({
@@ -89,7 +89,7 @@ describe('Bot startup', () => {
     test('should handle migration failure and exit', async () => {
       // Mock failed migration
       mockMigrate.mockResolvedValue(false);
-      
+
       // Mock process.exit to prevent actual exit
       const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
 
@@ -100,11 +100,11 @@ describe('Bot startup', () => {
       expect(console.error).toHaveBeenCalledWith(
         'Failed to start app:',
         expect.objectContaining({
-          message: 'Database migration failed'
+          message: 'Database migration failed',
         })
       );
       expect(mockExit).toHaveBeenCalledWith(1);
-      
+
       mockExit.mockRestore();
     });
 
@@ -112,7 +112,7 @@ describe('Bot startup', () => {
       // Mock migration throwing an error
       const migrationError = new Error('Connection failed');
       mockMigrate.mockRejectedValue(migrationError);
-      
+
       // Mock process.exit to prevent actual exit
       const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
 
@@ -122,7 +122,7 @@ describe('Bot startup', () => {
       expect(mockMigrate).toHaveBeenCalledTimes(1);
       expect(console.error).toHaveBeenCalledWith('Failed to start app:', migrationError);
       expect(mockExit).toHaveBeenCalledWith(1);
-      
+
       mockExit.mockRestore();
     });
   });
