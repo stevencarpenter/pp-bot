@@ -78,6 +78,11 @@ export function createApp() {
       if (results.length) await say(results.join('\n'));
     } catch (err) {
       console.error('Error processing message event:', err);
+      try {
+        await say('Sorry, something went wrong processing your vote. Please try again later.');
+      } catch (sayErr) {
+        console.error('Failed to send error message:', sayErr);
+      }
     }
   });
 
