@@ -6,7 +6,12 @@ async function migrate(poolOverride?: any): Promise<boolean> {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
         logger.error('DATABASE_URL not set. Aborting migrations.');
-        process.exit(1);
+        if (!poolOverride) {
+            // CLI or test usage without pool - use process.exit
+            process.exit(1);
+        }
+        // Programmatic usage with pool - return false
+        return false;
     }
 
     // Use provided pool for testing, or create a new client
@@ -73,7 +78,12 @@ async function migrate(poolOverride?: any): Promise<boolean> {
         } catch (e: any) {
             if (attempt === maxAttempts) {
                 logger.error('Failed to connect to database after retries:', e.message);
-                process.exit(1);
+                if (!poolOverride) {
+                    // CLI or test usage without pool - use process.exit
+                    process.exit(1);
+                }
+                // Programmatic usage with pool - return false
+                return false;
             }
             const delay = 500 * attempt;
             logger.info(`DB not ready (attempt ${attempt}/${maxAttempts}): ${e.message}. Retrying in ${delay}ms...`);
