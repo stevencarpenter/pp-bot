@@ -2,11 +2,10 @@
 import {Client} from 'pg';
 import logger from '../logger';
 
-async function migrate(poolOverride?: any) {
+async function migrate(poolOverride?: any): Promise<boolean> {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
-        const errorMsg = 'DATABASE_URL not set. Aborting migrations.';
-        logger.error(errorMsg);
+        logger.error('DATABASE_URL not set. Aborting migrations.');
         process.exit(1);
     }
 
@@ -73,8 +72,7 @@ async function migrate(poolOverride?: any) {
             break;
         } catch (e: any) {
             if (attempt === maxAttempts) {
-                const errorMsg = `Failed to connect to database after retries: ${e.message}`;
-                logger.error(errorMsg);
+                logger.error('Failed to connect to database after retries:', e.message);
                 process.exit(1);
             }
             const delay = 500 * attempt;
@@ -88,10 +86,12 @@ async function migrate(poolOverride?: any) {
         await client.query(ddl);
         await client.query('COMMIT');
         logger.info('✅ Migration complete');
+        return true;
     } catch (e) {
         await client.query('ROLLBACK');
         logger.error('Migration failed:', e);
         process.exitCode = 1;
+        return false;
     } finally {
         if (shouldCloseClient) {
             await client.end();

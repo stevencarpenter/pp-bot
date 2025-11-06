@@ -152,8 +152,8 @@ export async function start() {
     if (process.env.DATABASE_URL) {
       console.log('Running database migrations...');
       const pool = getPool();
-      await migrate(pool);
-      if (process.exitCode === 1) {
+      const migrationSuccess = await migrate(pool);
+      if (!migrationSuccess) {
         throw new Error('Database migration failed');
       }
       console.log('Database migrations complete');

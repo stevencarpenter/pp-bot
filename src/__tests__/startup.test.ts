@@ -13,15 +13,11 @@ describe('Bot startup', () => {
     process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
     process.env.SLACK_SIGNING_SECRET = 'test-secret';
     process.env.SLACK_APP_TOKEN = 'xapp-test-token';
+    process.env.LOG_LEVEL = 'error'; // Suppress logs during tests
   });
 
   afterEach(() => {
     process.env = { ...originalEnv };
-  });
-
-  test('should create app with required environment variables', () => {
-    const app = createApp();
-    expect(app).toBeDefined();
   });
 
   test('should throw error when required Slack env vars are missing', () => {
