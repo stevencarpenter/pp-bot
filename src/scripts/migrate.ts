@@ -5,7 +5,8 @@ import logger from '../logger';
 async function migrate(poolOverride?: any) {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
-        logger.error('DATABASE_URL not set. Aborting migrations.');
+        const errorMsg = 'DATABASE_URL not set. Aborting migrations.';
+        logger.error(errorMsg);
         process.exit(1);
     }
 
@@ -72,7 +73,8 @@ async function migrate(poolOverride?: any) {
             break;
         } catch (e: any) {
             if (attempt === maxAttempts) {
-                logger.error('Failed to connect to database after retries:', e.message);
+                const errorMsg = `Failed to connect to database after retries: ${e.message}`;
+                logger.error(errorMsg);
                 process.exit(1);
             }
             const delay = 500 * attempt;

@@ -10,6 +10,8 @@ import {
   updateUserScore,
 } from './storage/database';
 import { waitForDatabase } from './db';
+import { getPool } from './storage/pool';
+import migrate from './scripts/migrate';
 
 dotenv.config();
 
@@ -145,6 +147,19 @@ export async function start() {
     console.log('Waiting for database connection...');
     await waitForDatabase(15, 2000); // 15 retries with 2s initial delay
     console.log('Database is ready');
+
+    // Run migrations to ensure tables exist (if DATABASE_URL is set)
+    if (process.env.DATABASE_URL) {
+      console.log('Running database migrations...');
+      const pool = getPool();
+      await migrate(pool);
+      if (process.exitCode === 1) {
+        throw new Error('Database migration failed');
+      }
+      console.log('Database migrations complete');
+    } else {
+      console.log('Skipping migrations - DATABASE_URL not set');
+    }
 
     const app = createApp();
     const port = process.env.PORT || process.env.RAILWAY_PORT || 3000;
