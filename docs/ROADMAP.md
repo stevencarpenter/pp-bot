@@ -520,7 +520,7 @@ CREATE TABLE vote_history
 ### High-Risk Items
 
 | Risk                                      | Impact | Mitigation                               | Owner    |
-| ----------------------------------------- | ------ | ---------------------------------------- | -------- |
+|-------------------------------------------|--------|------------------------------------------|----------|
 | Data loss during migration                | High   | Backup JSON data, test migration         | Dev Team |
 | Railway.com costs exceed budget           | Medium | Monitor usage, optimize queries          | PM       |
 | TypeScript migration breaks functionality | High   | Comprehensive testing, gradual migration | Dev Team |
@@ -626,27 +626,27 @@ Week 7+: Polish & Launch
    ```
 
 2. **Follow the issues in order**
-   - Start with Milestone 1: Foundation Setup
-   - Work through issues #1 and #2
-   - Test thoroughly before moving to next milestone
+    - Start with Milestone 1: Foundation Setup
+    - Work through issues #1 and #2
+    - Test thoroughly before moving to next milestone
 
 3. **Contribute**
-   - Create feature branches
-   - Write tests for new features
-   - Follow the style guide in CONTRIBUTING.md
-   - Submit pull requests for review
+    - Create feature branches
+    - Write tests for new features
+    - Follow the style guide in CONTRIBUTING.md
+    - Submit pull requests for review
 
 ### For Project Managers
 
 1. **Track progress**
-   - Monitor GitHub milestones
-   - Review weekly standups
-   - Adjust timeline as needed
+    - Monitor GitHub milestones
+    - Review weekly standups
+    - Adjust timeline as needed
 
 2. **Manage risks**
-   - Review risk register weekly
-   - Address blockers promptly
-   - Communicate with stakeholders
+    - Review risk register weekly
+    - Address blockers promptly
+    - Communicate with stakeholders
 
 ---
 
