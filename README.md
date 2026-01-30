@@ -1,8 +1,9 @@
 <p align="center">
   <img
-    src="https://raw.githubusercontent.com/stevencarpenter/pp-bot/main/docs/assets/pp-bot.png"
+    src="docs/assets/ppbot_github_1280x640.png"
     alt="pp-bot logo"
-    width="180"
+    width="1280"
+    height="640"
   />
 </p>
 
@@ -13,7 +14,7 @@ using `@user ++` or `@user --` to increment or decrement their score on the lead
 "things" leaderboard so channels can celebrate concepts such as `@broncos ++` for a big win even when no Slack user
 with that handle exists.
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/0sQdqi?referralCode=vxKTaM&utm_medium=integration&utm_source=template&utm_campaign=generic)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/pp-bot)
 
 ## Table of Contents
 
@@ -135,31 +136,31 @@ npm install
 ```
 
 3. Create a Slack App:
-   - Go to https://api.slack.com/apps
-   - Click "Create New App" → "From scratch"
-   - Name your app (e.g., "PP Bot") and select your workspace
+    - Go to https://api.slack.com/apps
+    - Click "Create New App" → "From scratch"
+    - Name your app (e.g., "PP Bot") and select your workspace
 
 4. Configure your Slack App:
-   - **OAuth & Permissions**: Add these Bot Token Scopes:
-     - `app_mentions:read`
-     - `chat:write`
-     - `channels:history`
-     - `channels:read`
-     - `groups:history`
-     - `groups:read`
-     - `im:history`
-     - `mpim:history`
-     - `commands`
-   - **Socket Mode**: Enable Socket Mode and create an App-Level Token with `connections:write` scope
-   - **Slash Commands**: Create three commands:
-     - `/leaderboard` - Description: "Show the leaderboard"
-     - `/score` - Description: "Show your score"
-     - `/help` - Description: "Show help"
-   - **Event Subscriptions**: Enable events and subscribe to:
-     - `message.channels`
-     - `message.groups`
-     - `message.im`
-     - `message.mpim`
+    - **OAuth & Permissions**: Add these Bot Token Scopes:
+        - `app_mentions:read`
+        - `chat:write`
+        - `channels:history`
+        - `channels:read`
+        - `groups:history`
+        - `groups:read`
+        - `im:history`
+        - `mpim:history`
+        - `commands`
+    - **Socket Mode**: Enable Socket Mode and create an App-Level Token with `connections:write` scope
+    - **Slash Commands**: Create three commands:
+        - `/leaderboard` - Description: "Show the leaderboard"
+        - `/score` - Description: "Show your score"
+        - `/help` - Description: "Show help"
+    - **Event Subscriptions**: Enable events and subscribe to:
+        - `message.channels`
+        - `message.groups`
+        - `message.im`
+        - `message.mpim`
 
 5. Install the app to your workspace (OAuth & Permissions page)
 
@@ -170,10 +171,10 @@ cp .env.example .env
 ```
 
 7. Edit `.env` and add your tokens:
-   - `SLACK_BOT_TOKEN`: Bot token (starts with `xoxb-`)
-   - `SLACK_APP_TOKEN`: App-level token (starts with `xapp-`)
-   - `SLACK_SIGNING_SECRET`: App signing secret
-   - (Optional) `DATABASE_URL`: e.g. `postgres://user:pass@localhost:5432/ppbot`
+    - `SLACK_BOT_TOKEN`: Bot token (starts with `xoxb-`)
+    - `SLACK_APP_TOKEN`: App-level token (starts with `xapp-`)
+    - `SLACK_SIGNING_SECRET`: App signing secret
+    - (Optional) `DATABASE_URL`: e.g. `postgres://user:pass@localhost:5432/ppbot`
 
 ## Configuration
 
