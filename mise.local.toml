@@ -1,7 +1,0 @@
-[tools]
-node = "20.20.0"
-postgres = "17"
-
-[env]
-DATABASE_URL="postgres://ppbot:ppbot@localhost:5432/ppbot"
-LOG_LEVEL="INFO"
