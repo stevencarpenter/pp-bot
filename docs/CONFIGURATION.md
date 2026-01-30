@@ -1,6 +1,6 @@
 # Configuration Reference
 
-This document lists all supported environment variables for pp-bot. Values are read from the process
+This document lists supported environment variables for pp-bot. Values are read from the process
 environment at startup.
 
 ## Required
