@@ -6,9 +6,6 @@ dist
 .serena
 .env
 .env.*
-Dockerfile*
 .gitignore
-Dockerfile
 **/.DS_Store
 coverage
-

@@ -9,9 +9,8 @@ contribute effectively.
 pp-bot/
 ├── src/               # TypeScript source code
 ├── docs/              # Documentation files
-│   ├── EXAMPLES.md    # Usage examples
 │   ├── DEPLOYMENT.md  # Deployment guide
-│   └── ...            # Other documentation
+│   ├── CONFIGURATION.md # Environment variable reference
 ├── package.json       # Node.js dependencies and scripts
 ├── .env.example       # Example environment variables
 ├── .gitignore         # Files to exclude from git
@@ -51,11 +50,22 @@ All tests should pass before you submit a pull request.
 - Keep functions small and focused
 - Follow existing code patterns
 
+## Conventional Commits
+
+We use Conventional Commits to generate release notes automatically:
+
+- `feat: add new slash command`
+- `fix: handle duplicate message events`
+- `docs: update configuration reference`
+- `chore: update dependencies`
+
+Breaking changes should use `!` (e.g., `feat!: change database schema`).
+
 ## Adding New Features
 
 When adding new features:
 
-1. **Write tests first**: Add tests to `index.test.js` for your new functionality
+1. **Write tests first**: Add tests under `src/__tests__/` for your new functionality
 2. **Implement the feature**: Make minimal changes to achieve the goal
 3. **Update documentation**: Add usage examples and update README.md if needed
 4. **Run tests**: Ensure all tests pass with `npm test`
@@ -65,9 +75,9 @@ When adding new features:
 
 ### Adding a new slash command
 
-1. Add the command handler in `index.js` inside the `startBot()` function:
+1. Add the command handler in `src/index.ts` inside `createApp()`:
 
-   ```javascript
+   ```typescript
    app.command('/mycommand', async ({ command, ack, say }) => {
      await ack();
      // Your command logic here
@@ -81,9 +91,9 @@ When adding new features:
 
 ### Modifying the vote pattern
 
-The voting pattern is defined in the `parseVote()` function:
+The voting pattern is defined in `src/utils/vote.ts` in the `parseVote()` function:
 
-```javascript
+```typescript
 const regex = /<@([A-Z0-9]+)>\s*(\+\+|--)/g;
 ```
 
@@ -95,12 +105,12 @@ If you need to change how votes are detected:
 
 ### Changing leaderboard storage
 
-The current implementation uses a JSON file (`leaderboard.json`). To change this:
+The current implementation uses PostgreSQL via the storage layer. To change this:
 
-1. Modify `loadLeaderboard()` and `saveLeaderboard()` functions
-2. Ensure backward compatibility or provide migration path
-3. Update tests to work with the new storage method
-4. Document the new storage method in README.md
+1. Update `src/storage/database.ts` and `src/scripts/migrate.ts`
+2. Ensure backward compatibility or provide a migration path
+3. Update tests under `src/__tests__/`
+4. Document the change in README.md and `docs/DEPLOYMENT.md`
 
 ## Pull Request Guidelines
 
@@ -109,7 +119,12 @@ The current implementation uses a JSON file (`leaderboard.json`). To change this
 3. **Reference issues**: If fixing a bug, reference the issue number
 4. **Keep PRs focused**: One feature or fix per PR
 5. **Ensure tests pass**: All tests must pass
-6. **Update documentation**: Update README.md and docs/EXAMPLES.md as needed
+6. **Update documentation**: Update README.md and docs/DEPLOYMENT.md as needed
+
+## Release Process
+
+We use Release Please to generate release PRs and changelog entries based on Conventional Commits.
+When changes land on `main`, a release PR is created and tags are generated on merge.
 
 ## Testing with Slack
 
