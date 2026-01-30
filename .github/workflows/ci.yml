@@ -14,7 +14,7 @@ jobs:
         node-version: [18, 20, 24]
     services:
       postgres:
-        image: postgres-ssl:17
+        image: postgres:17
         env:
           POSTGRES_USER: ppbot
           POSTGRES_PASSWORD: ppbot
