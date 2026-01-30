@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/pp-bot.png" alt="pp-bot logo" width="180" />
+</p>
+
 # pp-bot
 
 This is a small Slack bot that manages a leaderboard of Slack users in an organization. Users can vote for each other
