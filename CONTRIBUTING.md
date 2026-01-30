@@ -101,7 +101,7 @@ If you need to change how votes are detected:
 
 1. Update the regex pattern
 2. Add tests covering the new pattern
-3. Update docs/EXAMPLES.md with new usage examples
+3. Update README.md with new usage examples
 
 ### Changing leaderboard storage
 

@@ -15,10 +15,11 @@
 4. [Environment Variables](#environment-variables)
 5. [Deployment](#deployment)
 6. [Post-Deployment Verification](#post-deployment-verification)
-7. [Monitoring & Logging](#monitoring--logging)
-8. [Troubleshooting](#troubleshooting)
-9. [Cost Optimization](#cost-optimization)
-10. [Rollback Procedures](#rollback-procedures)
+7. [Slack App Setup](#slack-app-setup)
+8. [Monitoring & Logging](#monitoring--logging)
+9. [Troubleshooting](#troubleshooting)
+10. [Cost Optimization](#cost-optimization)
+11. [Rollback Procedures](#rollback-procedures)
 
 ---
 
@@ -62,18 +63,18 @@ railway login
 ### Step 1: Create New Project
 
 1. **Navigate to Railway Dashboard**
-    - Go to https://railway.app
-    - Click "New Project"
+   - Go to https://railway.app
+   - Click "New Project"
 
 2. **Connect GitHub Repository**
-    - Select "Deploy from GitHub repo"
-    - Authorize Railway to access your GitHub
-    - Select `stevencarpenter/pp-bot` repository
+   - Select "Deploy from GitHub repo"
+   - Authorize Railway to access your GitHub
+   - Select `stevencarpenter/pp-bot` repository
 
 3. **Configure Initial Settings**
-    - Project name: `<your-project-name>`
-    - Environment: `production`
-    - Branch: `main`
+   - Project name: `<your-project-name>`
+   - Environment: `production`
+   - Branch: `main`
 
 ### Step 2: Configure Build Settings
 
@@ -100,6 +101,60 @@ npm start
 ### Step 3: Environment configuration
 
 Set required environment variables in Railway (see [Environment Variables](#environment-variables)).
+
+---
+
+## Slack App Setup
+
+### Step 1: Create a Slack App
+
+1. Go to https://api.slack.com/apps
+2. Click **Create New App** → **From scratch**
+3. Name your app and select your workspace
+
+### Step 2: Enable Socket Mode
+
+1. Open **Socket Mode**
+2. Toggle **Enable Socket Mode**
+3. Create an **App-Level Token** with `connections:write`
+4. Save the token as `SLACK_APP_TOKEN`
+
+### Step 3: OAuth Scopes
+
+In **OAuth & Permissions**, add these bot token scopes:
+
+- `app_mentions:read`
+- `chat:write`
+- `channels:history`
+- `channels:read`
+- `groups:history`
+- `groups:read`
+- `im:history`
+- `mpim:history`
+- `commands`
+
+Install the app to your workspace and save the bot token as `SLACK_BOT_TOKEN`.
+
+### Step 4: Slash Commands
+
+Create the following commands in **Slash Commands**:
+
+- `/leaderboard` - Show the leaderboard
+- `/score` - Show your score
+- `/help` - Show help
+
+### Step 5: Event Subscriptions
+
+Enable **Event Subscriptions** and subscribe to:
+
+- `message.channels`
+- `message.groups`
+- `message.im`
+- `message.mpim`
+
+### Step 6: Signing Secret
+
+Copy the **Signing Secret** from **Basic Information** and set it as `SLACK_SIGNING_SECRET`.
 
 ---
 
@@ -189,6 +244,7 @@ PORT=3000
 ```
 
 Notes:
+
 - Railway provides `RAILWAY_PORT`; the app uses `PORT` or `RAILWAY_PORT`.
 - The app runs migrations automatically on startup when `DATABASE_URL` is set.
 

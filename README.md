@@ -5,6 +5,8 @@ using `@user ++` or `@user --` to increment or decrement their score on the lead
 "things" leaderboard so channels can celebrate concepts such as `@broncos ++` for a big win even when no Slack user
 with that handle exists.
 
+[![Deploy on Railway](https://railway.app/button.svg)](docs/DEPLOYMENT.md)
+
 ## Table of Contents
 
 - [Features](#features)
@@ -16,6 +18,9 @@ with that handle exists.
 - [Running Tests](#running-tests)
 - [Database & Storage](#database--storage)
 - [How It Works](#how-it-works)
+- [Architecture](#architecture)
+- [Support](#support)
+- [FAQ](#faq)
 - [Limitations](#limitations)
 - [Security](#security)
 - [Contributing](#contributing)
@@ -30,17 +35,25 @@ with that handle exists.
 - **Personal Score**: Check your own score with the `/score` command
 - **Self-Vote Prevention**: Users cannot vote for themselves
 - **Replay Protection**: Duplicate Slack events do not double-apply votes
+- **Examples**: See `docs/EXAMPLES.md` for common message patterns
+- **Help**: Use `/help` for in-product usage tips
 
 ## Quick Start
 
-1. Create a Slack app (Socket Mode enabled) and install it to your workspace.
-2. Create a `.env` file (see [Configuration](#configuration)).
+1. Create and install a Slack app (Socket Mode enabled).
+2. Export required environment variables.
 3. Install dependencies and run:
 
 ```bash
 npm install
+export SLACK_BOT_TOKEN=your-bot-token
+export SLACK_APP_TOKEN=your-app-token
+export SLACK_SIGNING_SECRET=your-signing-secret
+export DATABASE_URL=postgres://user:pass@localhost:5432/ppbot
 npm start
 ```
+
+If you prefer, set the variables in a `.env` file and run `npm start`.
 
 ## Usage
 
@@ -77,8 +90,20 @@ You can also celebrate non-user concepts:
 
 - `/leaderboard` - Display the top 10 users and top 10 things on their respective leaderboards
 - `/score` - Check your current score
+- `/help` - Show usage tips and examples
 
 ## Setup
+
+### Quick Setup (Local)
+
+If you already have a Slack app:
+
+```bash
+cp .env.example .env
+# fill in SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET, DATABASE_URL
+npm install
+npm start
+```
 
 ### Prerequisites
 
@@ -102,30 +127,31 @@ npm install
 ```
 
 3. Create a Slack App:
-    - Go to https://api.slack.com/apps
-    - Click "Create New App" → "From scratch"
-    - Name your app (e.g., "PP Bot") and select your workspace
+   - Go to https://api.slack.com/apps
+   - Click "Create New App" → "From scratch"
+   - Name your app (e.g., "PP Bot") and select your workspace
 
 4. Configure your Slack App:
-    - **OAuth & Permissions**: Add these Bot Token Scopes:
-        - `app_mentions:read`
-        - `chat:write`
-        - `channels:history`
-        - `channels:read`
-        - `groups:history`
-        - `groups:read`
-        - `im:history`
-        - `mpim:history`
-        - `commands`
-    - **Socket Mode**: Enable Socket Mode and create an App-Level Token with `connections:write` scope
-    - **Slash Commands**: Create two commands:
-        - `/leaderboard` - Description: "Show the leaderboard"
-        - `/score` - Description: "Show your score"
-    - **Event Subscriptions**: Enable events and subscribe to:
-        - `message.channels`
-        - `message.groups`
-        - `message.im`
-        - `message.mpim`
+   - **OAuth & Permissions**: Add these Bot Token Scopes:
+     - `app_mentions:read`
+     - `chat:write`
+     - `channels:history`
+     - `channels:read`
+     - `groups:history`
+     - `groups:read`
+     - `im:history`
+     - `mpim:history`
+     - `commands`
+   - **Socket Mode**: Enable Socket Mode and create an App-Level Token with `connections:write` scope
+   - **Slash Commands**: Create three commands:
+     - `/leaderboard` - Description: "Show the leaderboard"
+     - `/score` - Description: "Show your score"
+     - `/help` - Description: "Show help"
+   - **Event Subscriptions**: Enable events and subscribe to:
+     - `message.channels`
+     - `message.groups`
+     - `message.im`
+     - `message.mpim`
 
 5. Install the app to your workspace (OAuth & Permissions page)
 
@@ -136,10 +162,10 @@ cp .env.example .env
 ```
 
 7. Edit `.env` and add your tokens:
-    - `SLACK_BOT_TOKEN`: Bot token (starts with `xoxb-`)
-    - `SLACK_APP_TOKEN`: App-level token (starts with `xapp-`)
-    - `SLACK_SIGNING_SECRET`: App signing secret
-    - (Optional) `DATABASE_URL`: e.g. `postgres://user:pass@localhost:5432/ppbot`
+   - `SLACK_BOT_TOKEN`: Bot token (starts with `xoxb-`)
+   - `SLACK_APP_TOKEN`: App-level token (starts with `xapp-`)
+   - `SLACK_SIGNING_SECRET`: App signing secret
+   - (Optional) `DATABASE_URL`: e.g. `postgres://user:pass@localhost:5432/ppbot`
 
 ## Configuration
 
@@ -160,7 +186,7 @@ Environment variables are validated on startup; missing or invalid values will f
 For production deploys, set `NODE_ENV=production` (or keep `LOG_LEVEL=info`) to avoid noisy logs.
 For a full reference, see `docs/CONFIGURATION.md`.
 
-### Running the Bot
+## Running the Bot
 
 ```bash
 npm start
@@ -169,13 +195,13 @@ npm start
 If `DATABASE_URL` is not provided, DB-backed features will warn and score persistence won't work; tests always use an
 in-memory database.
 
-### Running Tests
+## Running Tests
 
 ```bash
 npm test
 ```
 
-### Database & Storage
+## Database & Storage
 
 The current implementation uses PostgreSQL (or pg-mem in tests) with three tables:
 
@@ -197,6 +223,33 @@ The bot listens to messages. When it detects voting syntax it:
 4. Emits response messages for each action
 
 The `/leaderboard` command surfaces both leaderboards, and `/score` reports the calling user's score.
+
+## Architecture
+
+```
+Slack (Socket Mode)
+        |
+        v
+   Slack Bolt App
+        |
+        v
+ PostgreSQL (leaderboard, thing_leaderboard, vote_history)
+```
+
+## Support
+
+Please open a GitHub issue for help or feature requests.
+
+## FAQ
+
+**Does this require a public HTTP endpoint?**  
+No. The bot uses Slack Socket Mode, so no inbound HTTP endpoint is required.
+
+**Why do I see "DATABASE_URL not set"?**  
+You can run without persistence, but leaderboards reset on restart. Set `DATABASE_URL` for PostgreSQL storage.
+
+**Why are some votes ignored?**  
+Duplicate events are deduplicated to prevent double-counting. Repeated targets in the same message are ignored.
 
 ## Limitations
 

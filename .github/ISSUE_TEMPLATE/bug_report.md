@@ -1,8 +1,8 @@
 ---
 name: Bug report
 about: Report a bug to help us improve
-title: "[Bug]: "
-labels: ["type:bug"]
+title: '[Bug]: '
+labels: ['type:bug']
 assignees: []
 ---
 

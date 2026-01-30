@@ -15,7 +15,7 @@
 ## Verification of Environment Variable Usage
 
 | Integration       | Location                                         | Notes                                                                                                            |
-|-------------------|--------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| ----------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
 | Slack credentials | `src/index.ts`                                   | Validates `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, and `SLACK_APP_TOKEN`; supplied to Bolt Socket Mode client. |
 | PostgreSQL        | `src/storage/pool.ts`, `src/storage/database.ts` | Pool initialised from `DATABASE_URL`; helper functions (`getTopUsers`, `recordVote`, etc.) rely on the pool.     |
 | Runtime port      | `src/index.ts`                                   | Uses `PORT` or `RAILWAY_PORT` for compatibility with Railway and generic containers.                             |
@@ -32,46 +32,46 @@ implies dependency priority within a milestone.
 ### Milestone A – Public Release Readiness (Core Hygiene)
 
 1. **Audit and lock down environment variables**
-    - Ensure `getPool()` reads `DATABASE_URL`, configures SSL when required, and warns in production if missing.
-    - Introduce runtime env validation (e.g., `zod`, `envalid`) for `LOG_LEVEL`, `NODE_ENV`, Slack tokens, and
-      `DATABASE_URL`.
-    - _Acceptance_: Startup fails clearly when required env vars are absent; documentation reflects the canonical list.
+   - Ensure `getPool()` reads `DATABASE_URL`, configures SSL when required, and warns in production if missing.
+   - Introduce runtime env validation (e.g., `zod`, `envalid`) for `LOG_LEVEL`, `NODE_ENV`, Slack tokens, and
+     `DATABASE_URL`.
+   - _Acceptance_: Startup fails clearly when required env vars are absent; documentation reflects the canonical list.
 2. **Database schema and migrations hardening**
-    - Supply migration files for `leaderboard` and `vote_history`; include timestamps and UPSERT compatibility.
-    - Add indexes on `leaderboard.user_id` and `vote_history` (`voted_user_id`, `created_at DESC`, optional
-      `channel_id`, `message_ts`).
-    - Document `npm run migrate` in `docs/DEPLOYMENT.md`.
-    - _Acceptance_: Fresh database bootstrap succeeds; indexes support query patterns.
+   - Supply migration files for `leaderboard` and `vote_history`; include timestamps and UPSERT compatibility.
+   - Add indexes on `leaderboard.user_id` and `vote_history` (`voted_user_id`, `created_at DESC`, optional
+     `channel_id`, `message_ts`).
+   - Document `npm run migrate` in `docs/DEPLOYMENT.md`.
+   - _Acceptance_: Fresh database bootstrap succeeds; indexes support query patterns.
 3. **Idempotency and duplicate-delivery handling**
-    - Protect against double-processing Slack events/messages (Socket Mode replay protection).
-    - Add DB unique constraint or app-level guard on `recordVote` for duplicates.
-    - _Acceptance_: Replayed messages do not double-apply score changes; automated tests capture behaviour.
+   - Protect against double-processing Slack events/messages (Socket Mode replay protection).
+   - Add DB unique constraint or app-level guard on `recordVote` for duplicates.
+   - _Acceptance_: Replayed messages do not double-apply score changes; automated tests capture behaviour.
 4. **Error handling and logging consistency**
-    - Centralise logging (e.g., dedicated logger module with Pino) and avoid `console.log` in production code paths.
-    - Normalise Slack responses to prevent leaking internals.
-    - _Acceptance_: Logs are structured and respect `LOG_LEVEL`; handlers emit user-friendly errors.
+   - Centralise logging (e.g., dedicated logger module with Pino) and avoid `console.log` in production code paths.
+   - Normalise Slack responses to prevent leaking internals.
+   - _Acceptance_: Logs are structured and respect `LOG_LEVEL`; handlers emit user-friendly errors.
 5. **`parseVote` edge cases and UX polish**
-    - Handle multiple mentions, punctuation, repeated targets, and ensure single vote per target per message if desired.
-    - Document and test all scenarios.
-    - _Acceptance_: Expanded unit tests cover tricky inputs; README details behaviour.
+   - Handle multiple mentions, punctuation, repeated targets, and ensure single vote per target per message if desired.
+   - Document and test all scenarios.
+   - _Acceptance_: Expanded unit tests cover tricky inputs; README details behaviour.
 6. **Security policy and community standards**
-    - Add `SECURITY.md` with reporting instructions.
-    - Add `CODE_OF_CONDUCT.md` (Contributor Covenant recommended) and link from README.
-    - _Acceptance_: Policies exist and are discoverable.
+   - Add `SECURITY.md` with reporting instructions.
+   - Add `CODE_OF_CONDUCT.md` (Contributor Covenant recommended) and link from README.
+   - _Acceptance_: Policies exist and are discoverable.
 7. **Repository metadata and templates**
-    - Provide `.github/ISSUE_TEMPLATE/*`, `PULL_REQUEST_TEMPLATE.md`, and `CODEOWNERS`.
-    - _Acceptance_: Templates function on GitHub; CODEOWNERS enforces review ownership.
+   - Provide `.github/ISSUE_TEMPLATE/*`, `PULL_REQUEST_TEMPLATE.md`, and `CODEOWNERS`.
+   - _Acceptance_: Templates function on GitHub; CODEOWNERS enforces review ownership.
 
 ### Milestone B – CI/CD and Quality Gates
 
 8. **Node.js CI workflow**
-    - GitHub Actions pipeline running lint, type-check, test (with coverage threshold), and build on push/PR for Node
-      18/20.
-    - Cache dependencies and upload coverage artifacts.
-    - _Acceptance_: Workflow required on `main`; failing checks block merges.
+   - GitHub Actions pipeline running lint, type-check, test (with coverage threshold), and build on push/PR for Node
+     18/20.
+   - Cache dependencies and upload coverage artifacts.
+   - _Acceptance_: Workflow required on `main`; failing checks block merges.
 9. **Dependency and security automation**
-    - Enable Dependabot (npm + GitHub Actions) and CodeQL scanning.
-    - _Acceptance_: Automated PRs and CodeQL baseline in place.
+   - Enable Dependabot (npm + GitHub Actions) and CodeQL scanning.
+   - _Acceptance_: Automated PRs and CodeQL baseline in place.
 10. **Container build and vulnerability scan**
 
 - CI job building Docker image; integrate Trivy (or similar) for scans.
@@ -194,46 +194,46 @@ implies dependency priority within a milestone.
 **Title**: RFC – One-Click Deploy for PP Bot (Railway baseline, optional multi-platform support)
 
 1. **Background & Goals**
-    - Deliver a deployment experience where users click a button, supply Slack credentials, and receive a running bot
-      with PostgreSQL.
-    - Socket Mode removes public ingress requirements; focus on provisioning Postgres and running migrations.
+   - Deliver a deployment experience where users click a button, supply Slack credentials, and receive a running bot
+     with PostgreSQL.
+   - Socket Mode removes public ingress requirements; focus on provisioning Postgres and running migrations.
 
 2. **Platform Evaluation**
-    - **Railway**: Native templates via `railway.json`, managed Postgres plugin, excellent fit.
-    - **Render**: Blueprint YAML with managed Postgres; Socket Mode compatible.
-    - **Fly.io**: `fly.toml` plus secrets; optional Fly Postgres.
-    - **AWS & generic VPS**: More complex; deprioritised for initial release.
+   - **Railway**: Native templates via `railway.json`, managed Postgres plugin, excellent fit.
+   - **Render**: Blueprint YAML with managed Postgres; Socket Mode compatible.
+   - **Fly.io**: `fly.toml` plus secrets; optional Fly Postgres.
+   - **AWS & generic VPS**: More complex; deprioritised for initial release.
 
 3. **Railway Baseline Proposal**
-    - `railway.json` defines app + Postgres services, required vars (`SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`,
-      `SLACK_SIGNING_SECRET`, `LOG_LEVEL`, `NODE_ENV`), automatic `DATABASE_URL` injection, and post-deploy
-      `npm run migrate`.
-    - User flow: Click badge → create Railway project → provide secrets → build runs → migrations execute → bot connects
-      via Socket Mode.
-    - Security: Encourage token rotation and least privilege scopes as documented.
+   - `railway.json` defines app + Postgres services, required vars (`SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`,
+     `SLACK_SIGNING_SECRET`, `LOG_LEVEL`, `NODE_ENV`), automatic `DATABASE_URL` injection, and post-deploy
+     `npm run migrate`.
+   - User flow: Click badge → create Railway project → provide secrets → build runs → migrations execute → bot connects
+     via Socket Mode.
+   - Security: Encourage token rotation and least privilege scopes as documented.
 
 4. **Implementation Notes**
-    - Dockerfile must produce production build (`npm ci`, `npm run build`, `node dist/index.js`).
-    - Migrations must be idempotent and safe on re-run.
-    - Optional `/health` endpoint for platform health checks.
-    - Default logging at `info`, with `debug` opt-in.
+   - Dockerfile must produce production build (`npm ci`, `npm run build`, `node dist/index.js`).
+   - Migrations must be idempotent and safe on re-run.
+   - Optional `/health` endpoint for platform health checks.
+   - Default logging at `info`, with `debug` opt-in.
 
 5. **Alternative Platform Adaptations**
-    - Render blueprint with migration hook and env definitions.
-    - Fly.io config plus instructions for secrets and migrations.
-    - Docker Compose quickstart for local or VPS environments.
+   - Render blueprint with migration hook and env definitions.
+   - Fly.io config plus instructions for secrets and migrations.
+   - Docker Compose quickstart for local or VPS environments.
 
 6. **Open Questions**
-    - Best strategy for deduplication of Slack events (DB constraint vs. in-memory cache).
-    - Slash command handling under Socket Mode (currently supported; emphasise in docs).
-    - Multi-tenant support (out of scope for initial release).
+   - Best strategy for deduplication of Slack events (DB constraint vs. in-memory cache).
+   - Slash command handling under Socket Mode (currently supported; emphasise in docs).
+   - Multi-tenant support (out of scope for initial release).
 
 7. **Documentation Rollout**
-    - README: Quickstart + deploy badge + architecture snapshot.
-    - docs/DEPLOYMENT.md: Platform-specific guides with screenshots or references.
-    - CONFIGURATION.md: Exhaustive env var reference (in docs/).
-    - SECURITY.md / CODE_OF_CONDUCT.md: Policies and triage.
-    - CONTRIBUTING.md: Reference commit conventions, CI expectations, and migration workflow.
+   - README: Quickstart + deploy badge + architecture snapshot.
+   - docs/DEPLOYMENT.md: Platform-specific guides with screenshots or references.
+   - CONFIGURATION.md: Exhaustive env var reference (in docs/).
+   - SECURITY.md / CODE_OF_CONDUCT.md: Policies and triage.
+   - CONTRIBUTING.md: Reference commit conventions, CI expectations, and migration workflow.
 
 ## Next Steps
 
