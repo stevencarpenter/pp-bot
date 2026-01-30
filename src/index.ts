@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
 import { App, LogLevel } from '@slack/bolt';
 import { parseVote } from './utils/vote';
 import {
@@ -15,8 +14,6 @@ import { getPool } from './storage/pool';
 import migrate from './scripts/migrate';
 import logger from './logger';
 import { validateEnv } from './env';
-
-dotenv.config();
 
 function getLogLevel(): LogLevel {
   const { logLevel } = validateEnv({ requireSlack: false });
@@ -193,7 +190,7 @@ export function createApp() {
 
 export async function start() {
   try {
-    // Wait for database to be ready before starting the app
+    // Wait for the database to be ready before starting the app
     logger.info('Waiting for database connection...');
     await waitForDatabase(15, 2000); // 15 retries with 2s initial delay
     logger.info('Database is ready');
