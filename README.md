@@ -5,7 +5,7 @@ using `@user ++` or `@user --` to increment or decrement their score on the lead
 "things" leaderboard so channels can celebrate concepts such as `@broncos ++` for a big win even when no Slack user
 with that handle exists.
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?repo=https://github.com/stevencarpenter/pp-bot)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/0sQdqi?referralCode=vxKTaM&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ## Table of Contents
 
