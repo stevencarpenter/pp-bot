@@ -13,5 +13,6 @@ describe('migration script', () => {
         await expect(pool.query('SELECT * FROM leaderboard')).resolves.toBeTruthy();
         await expect(pool.query('SELECT * FROM vote_history')).resolves.toBeTruthy();
         await expect(pool.query('SELECT * FROM thing_leaderboard')).resolves.toBeTruthy();
+        await expect(pool.query('SELECT * FROM message_dedupe')).resolves.toBeTruthy();
     });
 });

@@ -5,6 +5,22 @@ using `@user ++` or `@user --` to increment or decrement their score on the lead
 "things" leaderboard so channels can celebrate concepts such as `@broncos ++` for a big win even when no Slack user
 with that handle exists.
 
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Setup](#setup)
+- [Configuration](#configuration)
+- [Running the Bot](#running-the-bot)
+- [Running Tests](#running-tests)
+- [Database & Storage](#database--storage)
+- [How It Works](#how-it-works)
+- [Limitations](#limitations)
+- [Security](#security)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
 - **Upvote/Downvote (Users)**: Mention a user with `@username ++` or `@username --` to change their score
@@ -13,6 +29,18 @@ with that handle exists.
 - **Leaderboard**: View the top scorers with the `/leaderboard` command
 - **Personal Score**: Check your own score with the `/score` command
 - **Self-Vote Prevention**: Users cannot vote for themselves
+- **Replay Protection**: Duplicate Slack events do not double-apply votes
+
+## Quick Start
+
+1. Create a Slack app (Socket Mode enabled) and install it to your workspace.
+2. Create a `.env` file (see [Configuration](#configuration)).
+3. Install dependencies and run:
+
+```bash
+npm install
+npm start
+```
 
 ## Usage
 
@@ -113,6 +141,25 @@ cp .env.example .env
     - `SLACK_SIGNING_SECRET`: App signing secret
     - (Optional) `DATABASE_URL`: e.g. `postgres://user:pass@localhost:5432/ppbot`
 
+## Configuration
+
+Required:
+
+- `SLACK_BOT_TOKEN` - Slack bot token (starts with `xoxb-`)
+- `SLACK_APP_TOKEN` - Slack app token (starts with `xapp-`)
+- `SLACK_SIGNING_SECRET` - Slack signing secret
+
+Optional:
+
+- `DATABASE_URL` - PostgreSQL connection string for persistent storage
+- `LOG_LEVEL` - `error` | `warn` | `info` | `debug` (defaults to `info` in production, `debug` otherwise)
+- `NODE_ENV` - `development` | `production` | `test` (defaults to `development`)
+- `PORT` / `RAILWAY_PORT` - Port to bind the Slack Socket Mode listener (defaults to `3000`)
+
+Environment variables are validated on startup; missing or invalid values will fail fast with a clear error.
+For production deploys, set `NODE_ENV=production` (or keep `LOG_LEVEL=info`) to avoid noisy logs.
+For a full reference, see `docs/CONFIGURATION.md`.
+
 ### Running the Bot
 
 ```bash
@@ -135,8 +182,10 @@ The current implementation uses PostgreSQL (or pg-mem in tests) with three table
 - `leaderboard(user_id PK, score, created_at, updated_at)`
 - `thing_leaderboard(thing_name PK, score, created_at, updated_at)`
 - `vote_history(id PK, voter_id, voted_user_id, vote_type, channel_id?, message_ts?, created_at)`
+- `message_dedupe(id PK, channel_id, message_ts, created_at)` for replay protection
 
 Migrations: `npm run migrate` will create the tables on a real database.
+The application also runs migrations on startup when `DATABASE_URL` is set.
 
 ## How It Works
 
@@ -149,6 +198,11 @@ The bot listens to messages. When it detects voting syntax it:
 
 The `/leaderboard` command surfaces both leaderboards, and `/score` reports the calling user's score.
 
+## Limitations
+
+- Socket Mode is required (no public HTTP endpoints).
+- Votes are deduplicated per message; repeated targets in the same message are ignored.
+
 ## Development Notes
 
 - Tests use an ephemeral pg-mem backed pool substitute to avoid dangling sockets.
@@ -156,6 +210,15 @@ The `/leaderboard` command surfaces both leaderboards, and `/score` reports the 
 - Coverage thresholds enforce a baseline to catch regressions early.
 - Vote parsing sanitizes user and thing targets with the well-maintained [
   `validator`](https://github.com/validatorjs/validator.js) library before interacting with the database.
+
+## Security
+
+Please report vulnerabilities via GitHub Security Advisories. Do not email maintainers.
+See `SECURITY.md` for details.
+
+## Contributing
+
+See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
 
 ## License
 

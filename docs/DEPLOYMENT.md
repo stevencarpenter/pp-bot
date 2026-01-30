@@ -71,7 +71,7 @@ railway login
     - Select `stevencarpenter/pp-bot` repository
 
 3. **Configure Initial Settings**
-    - Project name: `pp-bot-production`
+    - Project name: `<your-project-name>`
     - Environment: `production`
     - Branch: `main`
 
@@ -97,26 +97,9 @@ npm start
 20.x
 ```
 
-### Step 3: Create railway.toml
+### Step 3: Environment configuration
 
-In your repository root, create `railway.toml`:
-
-```toml
-[build]
-builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build"
-
-[deploy]
-startCommand = "npm start"
-healthcheckPath = "/health"
-healthcheckTimeout = 100
-healthcheckInterval = 30
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 10
-
-[env]
-NODE_ENV = "production"
-```
+Set required environment variables in Railway (see [Environment Variables](#environment-variables)).
 
 ---
 
@@ -134,64 +117,57 @@ NODE_ENV = "production"
 ```sql
 CREATE TABLE IF NOT EXISTS leaderboard
 (
-    user_id
-    VARCHAR
-(
-    20
-) PRIMARY KEY,
-    score INTEGER DEFAULT 0 NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW
-(
-),
-    updated_at TIMESTAMP DEFAULT NOW
-(
-)
-    );
+    user_id    VARCHAR(20) PRIMARY KEY,
+    score      INTEGER   DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_user ON leaderboard (user_id);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_score ON leaderboard (score DESC);
 
-CREATE INDEX idx_leaderboard_score ON leaderboard (score DESC);
+CREATE TABLE IF NOT EXISTS thing_leaderboard
+(
+    thing_name VARCHAR(64) PRIMARY KEY,
+    score      INTEGER   DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_thing_leaderboard_score ON thing_leaderboard (score DESC);
 
 CREATE TABLE IF NOT EXISTS vote_history
 (
-    id
-    SERIAL
-    PRIMARY
-    KEY,
-    voter_id
-    VARCHAR
-(
-    20
-) NOT NULL,
-    voted_user_id VARCHAR
-(
-    20
-) NOT NULL,
-    vote_type VARCHAR
-(
-    2
-) NOT NULL CHECK
-(
-    vote_type
-    IN
-(
-    '++',
-    '--'
-)),
-    channel_id VARCHAR
-(
-    20
-),
-    message_ts VARCHAR
-(
-    20
-),
-    created_at TIMESTAMP DEFAULT NOW
-(
-)
-    );
+    id            SERIAL PRIMARY KEY,
+    voter_id      VARCHAR(20) NOT NULL,
+    voted_user_id VARCHAR(20) NOT NULL,
+    vote_type     VARCHAR(2)  NOT NULL CHECK (vote_type IN ('++', '--')),
+    channel_id    VARCHAR(20),
+    message_ts    VARCHAR(20),
+    created_at    TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_vote_history_user ON vote_history (voted_user_id);
+CREATE INDEX IF NOT EXISTS idx_vote_history_created ON vote_history (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_vote_history_channel_message ON vote_history (channel_id, message_ts);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_vote_history_dedupe
+    ON vote_history (voter_id, voted_user_id, channel_id, message_ts)
+    WHERE channel_id IS NOT NULL AND message_ts IS NOT NULL;
 
-CREATE INDEX idx_vote_history_user ON vote_history (voted_user_id);
-CREATE INDEX idx_vote_history_created ON vote_history (created_at DESC);
+CREATE TABLE IF NOT EXISTS message_dedupe
+(
+    id         SERIAL PRIMARY KEY,
+    channel_id VARCHAR(20) NOT NULL,
+    message_ts VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (channel_id, message_ts)
+);
 ```
+
+Alternatively, you can rely on the built-in migration runner:
+
+```bash
+npm run migrate
+```
+
+The application also runs migrations automatically on startup when `DATABASE_URL` is set.
 
 ---
 
@@ -201,20 +177,20 @@ Configure in Railway Dashboard → Variables:
 
 ```bash
 # Slack Configuration
-SLACK_BOT_TOKEN=xoxb-your-bot-token-here
-SLACK_APP_TOKEN=xapp-your-app-token-here
+SLACK_BOT_TOKEN=your-bot-token-here
+SLACK_APP_TOKEN=your-app-token-here
 SLACK_SIGNING_SECRET=your-signing-secret-here
 
 # Application Configuration
 NODE_ENV=production
 LOG_LEVEL=info
-PORT=${{RAILWAY_STATIC_PORT}}
-HEALTH_PORT=3001
-
-# Monitoring (Optional)
-SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
-SENTRY_ENVIRONMENT=production
+DATABASE_URL=postgres://user:pass@host:5432/dbname
+PORT=3000
 ```
+
+Notes:
+- Railway provides `RAILWAY_PORT`; the app uses `PORT` or `RAILWAY_PORT`.
+- The app runs migrations automatically on startup when `DATABASE_URL` is set.
 
 ---
 
@@ -241,22 +217,6 @@ railway logs
 ---
 
 ## Post-Deployment Verification
-
-### Check Health Endpoint
-
-```bash
-curl https://pp-bot-production.up.railway.app/health
-```
-
-Expected response:
-
-```json
-{
-  "status": "ok",
-  "timestamp": "2025-10-23T12:00:00.000Z",
-  "uptime": "120s"
-}
-```
 
 ### Test Bot in Slack
 
@@ -286,7 +246,7 @@ Use services like:
 - Better Uptime
 - Pingdom
 
-Monitor: `https://pp-bot-production.up.railway.app/health`
+Monitor via the Railway deployment status page or add a lightweight health check if you expose one.
 
 ---
 
@@ -319,8 +279,7 @@ railway run psql $DATABASE_URL -c "SELECT 1"
 
 - $5 credit per month
 - ~500 MB RAM
-- Optimize connection pool: `DATABASE_POOL_SIZE=5`
-- Implement caching for leaderboard
+- Keep pool sizing modest for small instances
 
 ### Monitor Usage
 
@@ -375,7 +334,7 @@ railway rollback <deployment-id>
 - [ ] Database schema created
 - [ ] Environment variables configured
 - [ ] Automatic deployments enabled
-- [ ] Health checks passing
+- [ ] Deployments healthy in Railway
 - [ ] Bot responding in Slack
 - [ ] Monitoring set up
 - [ ] Backups configured

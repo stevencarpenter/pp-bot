@@ -45,7 +45,9 @@ describe('Bot startup', () => {
     describe('createApp', () => {
         test('should throw error when required Slack env vars are missing', () => {
             delete process.env.SLACK_BOT_TOKEN;
-            expect(() => createApp()).toThrow('Missing required Slack environment variables');
+            expect(() => createApp()).toThrow(
+                'Missing required environment variables: SLACK_BOT_TOKEN'
+            );
         });
     });
 

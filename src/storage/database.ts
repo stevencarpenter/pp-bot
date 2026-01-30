@@ -207,20 +207,40 @@ interface RecordVoteOptions {
     messageTs?: string;
 }
 
+export async function recordMessageIfNew(
+    channelId: string,
+    messageTs: string
+): Promise<boolean> {
+    return withDatabaseRetry(async () => {
+        const pool = getPool();
+        const {rows} = await pool.query(
+            `INSERT INTO message_dedupe (channel_id, message_ts)
+             VALUES ($1, $2)
+             ON CONFLICT DO NOTHING
+             RETURNING id`,
+            [channelId, messageTs]
+        );
+        return rows.length > 0;
+    });
+}
+
 export async function recordVote(
     voterId: string,
     votedUserId: string,
     voteType: VoteAction,
     options: RecordVoteOptions = {}
-): Promise<void> {
+): Promise<boolean> {
     const {channelId, messageTs} = options;
-    await withDatabaseRetry(async () => {
+    return withDatabaseRetry(async () => {
         const pool = getPool();
-        await pool.query(
+        const {rows} = await pool.query(
             `INSERT INTO vote_history (voter_id, voted_user_id, vote_type, channel_id, message_ts)
-             VALUES ($1, $2, $3, $4, $5)`,
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT DO NOTHING
+             RETURNING id`,
             [voterId, votedUserId, voteType, channelId || null, messageTs || null]
         );
+        return rows.length > 0;
     });
 }
 

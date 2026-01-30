@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import {App, LogLevel} from '@slack/bolt';
 import {parseVote} from './utils/vote';
 import {
+    recordMessageIfNew,
     getTopThings,
     getTopUsers,
     getUserScore,
@@ -13,12 +14,13 @@ import {waitForDatabase} from './db';
 import {getPool} from './storage/pool';
 import migrate from './scripts/migrate';
 import logger from './logger';
+import {validateEnv} from './env';
 
 dotenv.config();
 
 function getLogLevel(): LogLevel {
-    const level = process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
-    switch (level) {
+    const {logLevel} = validateEnv({requireSlack: false});
+    switch (logLevel) {
         case 'error':
             return LogLevel.ERROR;
         case 'warn':
@@ -33,13 +35,7 @@ function getLogLevel(): LogLevel {
 }
 
 export function createApp() {
-    if (
-        !process.env.SLACK_BOT_TOKEN ||
-        !process.env.SLACK_SIGNING_SECRET ||
-        !process.env.SLACK_APP_TOKEN
-    ) {
-        throw new Error('Missing required Slack environment variables');
-    }
+    validateEnv({requireSlack: true});
     const app = new App({
         token: process.env.SLACK_BOT_TOKEN,
         signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -56,19 +52,47 @@ export function createApp() {
             const text = (message as any).text || '';
             const votes = parseVote(text);
             if (votes.length === 0) return;
+            const channelId = (message as any).channel as string | undefined;
+            const messageTs = (message as any).ts as string | undefined;
+
+            if (channelId && messageTs) {
+                const isNewMessage = await recordMessageIfNew(channelId, messageTs);
+                if (!isNewMessage) {
+                    logger.info('Skipping duplicate message event', {channelId, messageTs});
+                    return;
+                }
+            }
+
+            const seenTargets = new Set<string>();
             const results: string[] = [];
             for (const vote of votes) {
+                const targetKey = `${vote.targetType}:${vote.targetId}`;
+                if (seenTargets.has(targetKey)) {
+                    logger.info('Skipping duplicate target vote in message', {target: targetKey});
+                    continue;
+                }
+                seenTargets.add(targetKey);
+
                 const delta = vote.action === '++' ? 1 : -1;
                 if (vote.targetType === 'user') {
                     if (vote.targetId === (message as any).user) {
                         results.push(`<@${vote.targetId}> cannot vote for themselves!`);
                         continue;
                     }
-                    const newScore = await updateUserScore(vote.targetId, delta);
-                    await recordVote((message as any).user, vote.targetId, vote.action, {
-                        channelId: (message as any).channel,
-                        messageTs: (message as any).ts,
+                    const recorded = await recordVote((message as any).user, vote.targetId, vote.action, {
+                        channelId,
+                        messageTs,
                     });
+                    if (!recorded) {
+                        logger.info('Skipping duplicate vote record', {
+                            voterId: (message as any).user,
+                            targetId: vote.targetId,
+                            channelId,
+                            messageTs,
+                        });
+                        continue;
+                    }
+                    const newScore = await updateUserScore(vote.targetId, delta);
                     const actionWord = vote.action === '++' ? 'increased' : 'decreased';
                     results.push(`<@${vote.targetId}>'s score ${actionWord} to ${newScore}`);
                     continue;
@@ -80,11 +104,11 @@ export function createApp() {
             }
             if (results.length) await say(results.join('\n'));
         } catch (err) {
-            console.error('Error processing message event:', err);
+            logger.error('Error processing message event:', err);
             try {
                 await say('Sorry, something went wrong processing your vote. Please try again later.');
             } catch (sayErr) {
-                console.error('Failed to send error message:', sayErr);
+                logger.error('Failed to send error message:', sayErr);
             }
         }
     });
@@ -122,7 +146,7 @@ export function createApp() {
             }
             await say(response);
         } catch (e) {
-            console.error('Failed to fetch leaderboard:', e);
+            logger.error('Failed to fetch leaderboard:', e);
             await say('Failed to load leaderboard.');
         }
     });
@@ -134,7 +158,7 @@ export function createApp() {
             const score = await getUserScore(command.user_id);
             await say(`<@${command.user_id}>'s current score is ${score}`);
         } catch (e) {
-            console.error('Failed to fetch score:', e);
+            logger.error('Failed to fetch score:', e);
             await say('Failed to load your score.');
         }
     });

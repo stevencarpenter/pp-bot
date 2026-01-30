@@ -47,7 +47,11 @@ describe('pg-mem storage operations', () => {
     });
 
     test('recordVote and getRecentVotes', async () => {
-        await recordVote('U_VOTER', 'U_Y', '++', {channelId: 'C1', messageTs: '123'});
+        const recorded = await recordVote('U_VOTER', 'U_Y', '++', {
+            channelId: 'C1',
+            messageTs: '123',
+        });
+        expect(recorded).toBe(true);
         const votes = await getRecentVotes('U_Y');
         expect(votes[0]).toMatchObject({votedUserId: 'U_Y', voteType: '++'});
         expect(votes[0].createdAt).toBeInstanceOf(Date);

@@ -23,6 +23,7 @@ describe('database integration', () => {
         await pool.query('DELETE FROM vote_history');
         await pool.query('DELETE FROM leaderboard');
         await pool.query('DELETE FROM thing_leaderboard');
+        await pool.query('DELETE FROM message_dedupe');
     });
 
     afterAll(async () => {
@@ -39,10 +40,11 @@ describe('database integration', () => {
     });
 
     test('recordVote stores vote history', async () => {
-        await storage.recordVote('U_VOTER', 'U_DB_USER', '++', {
+        const recorded = await storage.recordVote('U_VOTER', 'U_DB_USER', '++', {
             channelId: 'C123',
             messageTs: '123.456',
         });
+        expect(recorded).toBe(true);
         const {rows} = await pool.query('SELECT * FROM vote_history WHERE voted_user_id = $1', [
             'U_DB_USER',
         ]);
