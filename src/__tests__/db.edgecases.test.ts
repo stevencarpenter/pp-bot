@@ -14,6 +14,7 @@ describe('db module edge cases', () => {
   test('should warn when DATABASE_URL is not set', () => {
     // Clear DATABASE_URL
     delete process.env.DATABASE_URL;
+    process.env.LOG_LEVEL = 'info';
 
     // Spy on console.warn before importing
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
