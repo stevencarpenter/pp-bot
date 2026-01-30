@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="docs/assets/pp-bot.png" alt="pp-bot logo" width="180" />
+  <img
+    src="https://raw.githubusercontent.com/stevencarpenter/pp-bot/main/docs/assets/pp-bot.png"
+    alt="pp-bot logo"
+    width="180"
+  />
 </p>
 
 # pp-bot
