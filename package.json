@@ -29,25 +29,25 @@
   "dependencies": {
     "@slack/bolt": "^4.6.0",
     "dotenv": "^17.2.3",
-    "pg": "^8.16.3",
-    "validator": "^13.15.20"
+    "pg": "^8.17.2",
+    "validator": "^13.15.26"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.10.0",
-    "@types/pg": "^8.15.6",
-    "@types/validator": "^13.15.4",
-    "@typescript-eslint/eslint-plugin": "8.46.3",
-    "@typescript-eslint/parser": "8.46.3",
-    "eslint": "^9.39.1",
+    "@types/node": "^25.1.0",
+    "@types/pg": "^8.16.0",
+    "@types/validator": "^13.15.10",
+    "@typescript-eslint/eslint-plugin": "8.54.0",
+    "@typescript-eslint/parser": "8.54.0",
+    "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "jest": "^30.2.0",
-    "pg-mem": "^3.0.5",
-    "prettier": "^3.6.2",
-    "ts-jest": "^29.4.5",
+    "pg-mem": "^3.0.8",
+    "prettier": "^3.8.1",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "wait-on": "^9.0.1"
+    "wait-on": "^9.0.3"
   }
 }
