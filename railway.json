@@ -6,7 +6,6 @@
   },
   "deploy": {
     "startCommand": "npm start",
-    "preDeployCommand": "npm run migrate",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
