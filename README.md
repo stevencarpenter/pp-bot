@@ -221,6 +221,7 @@ The current implementation uses PostgreSQL (or pg-mem in tests) with three table
 
 Migrations: `npm run migrate` will create the tables on a real database.
 The application also runs migrations on startup when `DATABASE_URL` is set.
+For programmatic use, you can pass `migrate(pool, { maxAttempts, delayMs })` to tune retry behavior.
 
 ## How It Works
 

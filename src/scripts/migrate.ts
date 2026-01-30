@@ -2,7 +2,12 @@
 import {Client, Pool} from 'pg';
 import logger from '../logger';
 
-async function migrate(poolOverride?: Pool): Promise<boolean> {
+type MigrationOptions = {
+    maxAttempts?: number;
+    delayMs?: number;
+};
+
+async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise<boolean> {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
         logger.error('DATABASE_URL not set. Aborting migrations.');
@@ -22,18 +27,21 @@ async function migrate(poolOverride?: Pool): Promise<boolean> {
         // For testing: use the shared pool directly (no client closing)
         client = poolOverride;
         shouldCloseClient = false;
-    } else if (connectionString.startsWith('pgmem://')) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const {newDb} = require('pg-mem');
-        const db = newDb();
-        const pgMem = db.adapters.createPg();
-        client = new pgMem.Client();
-    } else {
-        client = new Client({
+    }
+
+    const createClient = () => {
+        if (connectionString.startsWith('pgmem://')) {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const {newDb} = require('pg-mem');
+            const db = newDb();
+            const pgMem = db.adapters.createPg();
+            return new pgMem.Client();
+        }
+        return new Client({
             connectionString,
             ssl: process.env.NODE_ENV === 'production' ? {rejectUnauthorized: false} : false
         });
-    }
+    };
 
     const ddl =
         // prettier-ignore
@@ -84,27 +92,34 @@ async function migrate(poolOverride?: Pool): Promise<boolean> {
             );
         `;
 
-    const maxAttempts = 10;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-            // Only connect if we need to (not using poolOverride)
-            if (shouldCloseClient) {
+    const maxAttempts = options?.maxAttempts ?? 10;
+    const baseDelayMs = options?.delayMs ?? 500;
+    if (!poolOverride) {
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                client = createClient();
                 await client.connect();
-            }
-            break;
-        } catch (e: any) {
-            if (attempt === maxAttempts) {
-                logger.error('Failed to connect to database after retries:', e.message);
-                if (!poolOverride) {
+                break;
+            } catch (e: any) {
+                if (client?.end) {
+                    try {
+                        await client.end();
+                    } catch {
+                        // ignore cleanup errors
+                    }
+                }
+                if (attempt === maxAttempts) {
+                    logger.error('Failed to connect to database after retries:', e.message);
                     // CLI usage without pool - use process.exit
                     process.exit(1);
+                    return false;
                 }
-                // Programmatic usage with pool - return false
-                return false;
+                const delay = baseDelayMs * attempt;
+                logger.info(
+                    `DB not ready (attempt ${attempt}/${maxAttempts}): ${e.message}. Retrying in ${delay}ms...`
+                );
+                await new Promise(r => setTimeout(r, delay));
             }
-            const delay = 500 * attempt;
-            logger.info(`DB not ready (attempt ${attempt}/${maxAttempts}): ${e.message}. Retrying in ${delay}ms...`);
-            await new Promise(r => setTimeout(r, delay));
         }
     }
 

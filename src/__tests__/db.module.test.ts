@@ -11,6 +11,7 @@ describe('db module behavior', () => {
     // Ensure a DATABASE_URL so pool initializes predictably
     process.env.DATABASE_URL = process.env.DATABASE_URL || 'pgmem://db-module';
     process.env.NODE_ENV = 'test';
+    process.env.LOG_LEVEL = 'info';
   });
 
   beforeEach(() => {
