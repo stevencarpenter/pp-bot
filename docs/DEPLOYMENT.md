@@ -247,6 +247,8 @@ Notes:
 
 - Railway provides `RAILWAY_PORT`; the app uses `PORT` or `RAILWAY_PORT`.
 - The app runs migrations automatically on startup when `DATABASE_URL` is set.
+- When using the Railway template, you'll be prompted for the Slack tokens during provisioning.
+- Railway config uses a pre-deploy migration hook; startup also runs migrations as a safety net.
 
 ---
 
@@ -283,6 +285,12 @@ railway logs
 ```
 
 ---
+
+## Health and Readiness
+
+pp-bot runs in Slack Socket Mode and does not expose an HTTP health endpoint by default.
+Use Railway's deployment status and logs to verify readiness, or add a lightweight HTTP
+endpoint if you need external health checks.
 
 ## Monitoring & Logging
 

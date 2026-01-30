@@ -4,7 +4,7 @@
 
 - **Purpose**: Slack bot that maintains a karma-style leaderboard via mentions and two slash commands.
 - **Architecture**: Built with Slack Bolt (Socket Mode), PostgreSQL persistence, TypeScript runtime, Jest-based tests,
-  Dockerfile/docker-compose for containerisation, and a Railway deployment configuration.
+  and a Railway deployment configuration.
 - **Current Documentation**: Rich set of guides including `README.md`, `CONTRIBUTING.md` (at root), and documentation in
   `docs/` including `DEPLOYMENT.md`, `EXAMPLES.md`, `MIGRATION.md`, `ROADMAP.md`, and `TECH_DECISION.md`.
 - **Security Posture**: All external integration credentials (Slack tokens, database URL) are supplied through
@@ -213,7 +213,7 @@ implies dependency priority within a milestone.
    - Security: Encourage token rotation and least privilege scopes as documented.
 
 4. **Implementation Notes**
-   - Dockerfile must produce production build (`npm ci`, `npm run build`, `node dist/index.js`).
+   - Ensure production build uses `npm ci`, `npm run build`, and `node dist/index.js`.
    - Migrations must be idempotent and safe on re-run.
    - Optional `/health` endpoint for platform health checks.
    - Default logging at `info`, with `debug` opt-in.
