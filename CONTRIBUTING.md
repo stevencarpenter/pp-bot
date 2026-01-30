@@ -123,8 +123,7 @@ The current implementation uses PostgreSQL via the storage layer. To change this
 
 ## Release Process
 
-We use Release Please to generate release PRs and changelog entries based on Conventional Commits.
-When changes land on `main`, a release PR is created and tags are generated on merge.
+You can manage it in the Railway dashboard, or however you want if you don't use Railway.
 
 ## Testing with Slack
 
