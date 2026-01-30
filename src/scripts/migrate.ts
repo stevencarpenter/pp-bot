@@ -18,6 +18,7 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
         // Programmatic usage with pool - return false
         return false;
     }
+    const connectionStringValue = connectionString;
 
     // Use provided pool for testing, or create a new client
     let client: any;
@@ -30,7 +31,7 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
     }
 
     const createClient = () => {
-        if (connectionString.startsWith('pgmem://')) {
+        if (connectionStringValue.startsWith('pgmem://')) {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             const {newDb} = require('pg-mem');
             const db = newDb();
@@ -38,7 +39,7 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
             return new pgMem.Client();
         }
         return new Client({
-            connectionString,
+            connectionString: connectionStringValue,
             ssl: process.env.NODE_ENV === 'production' ? {rejectUnauthorized: false} : false
         });
     };
@@ -78,9 +79,6 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
             CREATE INDEX IF NOT EXISTS idx_vote_history_user ON vote_history (voted_user_id);
             CREATE INDEX IF NOT EXISTS idx_vote_history_created ON vote_history (created_at DESC);
             CREATE INDEX IF NOT EXISTS idx_vote_history_channel_message ON vote_history (channel_id, message_ts);
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_vote_history_dedupe
-                ON vote_history (voter_id, voted_user_id, channel_id, message_ts)
-                WHERE channel_id IS NOT NULL AND message_ts IS NOT NULL;
 
             CREATE TABLE IF NOT EXISTS message_dedupe
             (
@@ -91,6 +89,59 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
                 UNIQUE (channel_id, message_ts)
             );
         `;
+
+    const dedupeSql =
+        // prettier-ignore
+        `
+            DELETE FROM vote_history
+            WHERE channel_id IS NOT NULL
+              AND message_ts IS NOT NULL
+              AND id NOT IN (
+                SELECT MIN(id)
+                FROM vote_history
+                WHERE channel_id IS NOT NULL
+                  AND message_ts IS NOT NULL
+                GROUP BY voter_id, voted_user_id, channel_id, message_ts
+              );
+        `;
+
+    const createDedupeIndexSql =
+        // prettier-ignore
+        `
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_vote_history_dedupe
+                ON vote_history (voter_id, voted_user_id, channel_id, message_ts)
+                WHERE channel_id IS NOT NULL AND message_ts IS NOT NULL;
+        `;
+
+    async function dedupeVoteHistory(): Promise<void> {
+        try {
+            await client.query(dedupeSql);
+            return;
+        } catch (e) {
+            if (!connectionStringValue.startsWith('pgmem://')) {
+                throw e;
+            }
+        }
+
+        // Fallback for pg-mem: dedupe in JS to avoid unsupported SQL constructs.
+        const result = await client.query(
+            `
+                SELECT id, voter_id, voted_user_id, channel_id, message_ts
+                FROM vote_history
+                WHERE channel_id IS NOT NULL AND message_ts IS NOT NULL
+                ORDER BY id;
+            `
+        );
+        const seen = new Set<string>();
+        for (const row of result.rows || []) {
+            const key = `${row.voter_id}|${row.voted_user_id}|${row.channel_id}|${row.message_ts}`;
+            if (seen.has(key)) {
+                await client.query('DELETE FROM vote_history WHERE id = $1', [row.id]);
+            } else {
+                seen.add(key);
+            }
+        }
+    }
 
     const maxAttempts = options?.maxAttempts ?? 10;
     const baseDelayMs = options?.delayMs ?? 500;
@@ -126,6 +177,8 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
     try {
         await client.query('BEGIN');
         await client.query(ddl);
+        await dedupeVoteHistory();
+        await client.query(createDedupeIndexSql);
         await client.query('COMMIT');
         logger.info('✅ Migration complete');
         return true;
