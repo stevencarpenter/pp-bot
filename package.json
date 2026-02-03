@@ -28,7 +28,7 @@
   "license": "MIT",
   "dependencies": {
     "@slack/bolt": "^4.6.0",
-    "pg": "^8.17.2",
+    "pg": "^8.18.0",
     "validator": "^13.15.26"
   },
   "devDependencies": {
