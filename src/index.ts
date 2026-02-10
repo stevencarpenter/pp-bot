@@ -1,19 +1,42 @@
 import { App, LogLevel } from '@slack/bolt';
 import { parseVote } from './utils/vote';
 import {
-  recordMessageIfNew,
+  removeMessageDedupeByKey,
   getTopThings,
   getTopUsers,
   getUserScore,
-  recordVote,
+  recordMessageIfNewByKey,
+  recordVoteAndUpdateUserScore,
   updateThingScore,
-  updateUserScore,
 } from './storage/database';
 import { waitForDatabase } from './db';
 import { getPool } from './storage/pool';
 import migrate from './scripts/migrate';
 import logger from './logger';
 import { validateEnv } from './env';
+import { createAbuseController } from './security/abuse-controls';
+import { resolveMessageDedupeKey } from './utils/dedupe';
+import { getMaintenanceConfig, runMaintenance, scheduleMaintenance } from './storage/maintenance';
+
+type SlackMessageEnvelope = {
+  subtype?: unknown;
+  bot_id?: unknown;
+  text?: unknown;
+  user?: unknown;
+  channel?: unknown;
+  ts?: unknown;
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object') {
+    return {};
+  }
+  return value as Record<string, unknown>;
+}
+
+function asSlackMessageEnvelope(message: unknown): SlackMessageEnvelope {
+  return asRecord(message) as SlackMessageEnvelope;
+}
 
 function getLogLevel(): LogLevel {
   const { logLevel } = validateEnv({ requireSlack: false });
@@ -33,6 +56,7 @@ function getLogLevel(): LogLevel {
 
 export function createApp() {
   validateEnv({ requireSlack: true });
+  const abuseController = createAbuseController();
   const app = new App({
     token: process.env.SLACK_BOT_TOKEN,
     signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -42,26 +66,75 @@ export function createApp() {
   });
 
   // Message handler
-  app.message(async ({ message, say }) => {
+  app.message(async ({ message, say, body }) => {
+    let dedupeKey: string | null = null;
+    let hasPersistentWrite = false;
+    let voterId: string | null = null;
+    let channelId: string | undefined;
+    let messageTs: string | undefined;
+    let eventId: string | undefined;
+
     try {
-      if ((message as any).subtype === 'bot_message' || (message as any).bot_id) return;
-      if (!('text' in message) || !('user' in message)) return;
-      const text = (message as any).text || '';
+      const envelope = asSlackMessageEnvelope(message);
+      if (envelope.subtype === 'bot_message' || envelope.bot_id) return;
+      if (typeof envelope.text !== 'string' || typeof envelope.user !== 'string') return;
+      const text = envelope.text;
       const votes = parseVote(text);
       if (votes.length === 0) return;
-      const channelId = (message as any).channel as string | undefined;
-      const messageTs = (message as any).ts as string | undefined;
+      channelId = typeof envelope.channel === 'string' ? envelope.channel : undefined;
+      messageTs = typeof envelope.ts === 'string' ? envelope.ts : undefined;
+      voterId = envelope.user;
+      const bodyRecord = asRecord(body);
+      eventId = typeof bodyRecord.event_id === 'string' ? bodyRecord.event_id : undefined;
 
-      if (channelId && messageTs) {
-        const isNewMessage = await recordMessageIfNew(channelId, messageTs);
-        if (!isNewMessage) {
-          logger.info('Skipping duplicate message event', { channelId, messageTs });
-          return;
-        }
+      dedupeKey = resolveMessageDedupeKey({ eventId, channelId, messageTs });
+      if (!dedupeKey) {
+        logger.warn('Skipping vote processing due to missing dedupe metadata', {
+          voterId,
+          channelId: channelId ?? null,
+          messageTs: messageTs ?? null,
+          eventId: eventId ?? null,
+        });
+        await say('Unable to process this vote because event metadata was incomplete.');
+        return;
+      }
+
+      const isNewMessage = await recordMessageIfNewByKey(dedupeKey, { channelId, messageTs });
+      if (!isNewMessage) {
+        logger.info('Skipping duplicate message event', {
+          dedupeKey,
+          channelId: channelId ?? null,
+          messageTs: messageTs ?? null,
+          eventId: eventId ?? null,
+        });
+        return;
+      }
+
+      const uniqueTargetsInMessage = new Set(
+        votes.map((vote) => `${vote.targetType}:${vote.targetId}`)
+      ).size;
+      const messageDecision = abuseController.evaluateMessage({
+        voterId,
+        channelId,
+        targetsInMessage: uniqueTargetsInMessage,
+      });
+      if (messageDecision.wouldBlock) {
+        logger.warn('Abuse control triggered at message level', {
+          reasonCode: messageDecision.reasonCode,
+          enforcementMode: abuseController.getConfig().enforcementMode,
+          voterId,
+          channelId: channelId ?? null,
+          details: messageDecision.details,
+        });
+      }
+      if (!messageDecision.allowed) {
+        await say(messageDecision.reasonMessage || 'Vote rejected by abuse controls.');
+        return;
       }
 
       const seenTargets = new Set<string>();
       const results: string[] = [];
+      let blockedWarning: string | null = null;
       for (const vote of votes) {
         const targetKey = `${vote.targetType}:${vote.targetId}`;
         if (seenTargets.has(targetKey)) {
@@ -70,37 +143,112 @@ export function createApp() {
         }
         seenTargets.add(targetKey);
 
-        const delta = vote.action === '++' ? 1 : -1;
-        if (vote.targetType === 'user') {
-          if (vote.targetId === (message as any).user) {
-            results.push(`<@${vote.targetId}> cannot vote for themselves!`);
-            continue;
-          }
-          const recorded = await recordVote((message as any).user, vote.targetId, vote.action, {
-            channelId,
-            messageTs,
-          });
-          if (!recorded) {
-            logger.info('Skipping duplicate vote record', {
-              voterId: (message as any).user,
-              targetId: vote.targetId,
-              channelId,
-              messageTs,
-            });
-            continue;
-          }
-          const newScore = await updateUserScore(vote.targetId, delta);
-          const actionWord = vote.action === '++' ? 'increased' : 'decreased';
-          results.push(`<@${vote.targetId}>'s score ${actionWord} to ${newScore}`);
+        if (vote.targetType === 'user' && vote.targetId === voterId) {
+          results.push(`<@${vote.targetId}> cannot vote for themselves!`);
           continue;
         }
 
-        const newScore = await updateThingScore(vote.targetId, delta);
-        const actionWord = vote.action === '++' ? 'increased' : 'decreased';
-        results.push(`Score for *${vote.targetId}* ${actionWord} to ${newScore}`);
+        const voteContext = {
+          voterId,
+          channelId,
+          targetId: vote.targetId,
+          targetType: vote.targetType,
+          action: vote.action,
+        };
+        const voteDecision = abuseController.reserveVote(voteContext);
+        if (voteDecision.wouldBlock) {
+          logger.warn('Abuse control triggered at vote level', {
+            reasonCode: voteDecision.reasonCode,
+            enforcementMode: abuseController.getConfig().enforcementMode,
+            voterId,
+            channelId: channelId ?? null,
+            targetId: vote.targetId,
+            targetType: vote.targetType,
+            action: vote.action,
+            details: voteDecision.details,
+          });
+        }
+        if (!voteDecision.allowed) {
+          blockedWarning =
+            blockedWarning || voteDecision.reasonMessage || 'Some votes were blocked.';
+          continue;
+        }
+        const reservation = voteDecision.reservation;
+
+        const delta = vote.action === '++' ? 1 : -1;
+        try {
+          if (vote.targetType === 'user') {
+            const voteResult = await recordVoteAndUpdateUserScore(
+              voterId,
+              vote.targetId,
+              vote.action,
+              delta,
+              {
+                channelId,
+                messageTs,
+              }
+            );
+            if (!voteResult.recorded) {
+              if (reservation) {
+                abuseController.releaseReservedVote(reservation);
+              }
+              logger.info('Skipping duplicate vote record', {
+                voterId,
+                targetId: vote.targetId,
+                channelId,
+                messageTs,
+              });
+              continue;
+            }
+            if (typeof voteResult.score !== 'number') {
+              throw new Error('Vote persisted but leaderboard score was not returned');
+            }
+            hasPersistentWrite = true;
+            const actionWord = vote.action === '++' ? 'increased' : 'decreased';
+            results.push(`<@${vote.targetId}>'s score ${actionWord} to ${voteResult.score}`);
+            continue;
+          }
+
+          const newScore = await updateThingScore(vote.targetId, delta);
+          const actionWord = vote.action === '++' ? 'increased' : 'decreased';
+          results.push(`Score for *${vote.targetId}* ${actionWord} to ${newScore}`);
+          hasPersistentWrite = true;
+        } catch (voteError) {
+          if (reservation) {
+            abuseController.releaseReservedVote(reservation);
+          }
+          throw voteError;
+        }
       }
-      if (results.length) await say(results.join('\n'));
+      if (results.length && blockedWarning) {
+        await say(`${results.join('\n')}\n${blockedWarning}`);
+        return;
+      }
+      if (results.length) {
+        await say(results.join('\n'));
+        return;
+      }
+      if (blockedWarning) {
+        await say(blockedWarning);
+      }
     } catch (err) {
+      if (dedupeKey && !hasPersistentWrite) {
+        try {
+          await removeMessageDedupeByKey(dedupeKey);
+          logger.warn('Released message dedupe key after processing failure', {
+            dedupeKey,
+            voterId,
+            channelId: channelId ?? null,
+            messageTs: messageTs ?? null,
+            eventId: eventId ?? null,
+          });
+        } catch (cleanupErr) {
+          logger.error(
+            'Failed to release message dedupe key after processing failure:',
+            cleanupErr
+          );
+        }
+      }
       logger.error('Error processing message event:', err);
       try {
         await say('Sorry, something went wrong processing your vote. Please try again later.');
@@ -190,6 +338,8 @@ export function createApp() {
 
 export async function start() {
   try {
+    validateEnv({ requireSlack: true });
+
     // Wait for the database to be ready before starting the app
     logger.info('Waiting for database connection...');
     await waitForDatabase(15, 2000); // 15 retries with 2s initial delay
@@ -204,8 +354,22 @@ export async function start() {
         throw new Error('Database migration failed');
       }
       logger.info('Database migrations complete');
+
+      const maintenanceConfig = getMaintenanceConfig();
+      if (maintenanceConfig.enabled) {
+        try {
+          await runMaintenance(maintenanceConfig);
+        } catch (maintenanceError) {
+          logger.error('Initial maintenance cleanup failed:', maintenanceError);
+        }
+        scheduleMaintenance(maintenanceConfig);
+        logger.info('Scheduled maintenance cleanup every 12 hours');
+      } else {
+        logger.info('Maintenance disabled by MAINTENANCE_ENABLED=false');
+      }
     } else {
       logger.info('Skipping migrations - DATABASE_URL not set');
+      logger.info('Skipping maintenance - DATABASE_URL not set');
     }
 
     const app = createApp();
