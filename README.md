@@ -1,9 +1,39 @@
+<p align="center">
+  <img
+    src="docs/assets/ppbot_github_1280x640.png"
+    alt="pp-bot logo"
+    width="1280"
+    height="640"
+  />
+</p>
+
 # pp-bot
 
 This is a small Slack bot that manages a leaderboard of Slack users in an organization. Users can vote for each other
 using `@user ++` or `@user --` to increment or decrement their score on the leaderboard. The bot also keeps a separate
 "things" leaderboard so channels can celebrate concepts such as `@broncos ++` for a big win even when no Slack user
 with that handle exists.
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/pp-bot)
+
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Setup](#setup)
+- [Configuration](#configuration)
+- [Running the Bot](#running-the-bot)
+- [Running Tests](#running-tests)
+- [Database & Storage](#database--storage)
+- [How It Works](#how-it-works)
+- [Architecture](#architecture)
+- [Support](#support)
+- [FAQ](#faq)
+- [Limitations](#limitations)
+- [Security](#security)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 
@@ -13,6 +43,26 @@ with that handle exists.
 - **Leaderboard**: View the top scorers with the `/leaderboard` command
 - **Personal Score**: Check your own score with the `/score` command
 - **Self-Vote Prevention**: Users cannot vote for themselves
+- **Replay Protection**: Duplicate Slack events do not double-apply votes
+- **Examples**: See `docs/EXAMPLES.md` for common message patterns
+- **Help**: Use `/help` for in-product usage tips
+
+## Quick Start
+
+1. Create and install a Slack app (Socket Mode enabled).
+2. Export required environment variables.
+3. Install dependencies and run:
+
+```bash
+npm install
+export SLACK_BOT_TOKEN=your-bot-token
+export SLACK_APP_TOKEN=your-app-token
+export SLACK_SIGNING_SECRET=your-signing-secret
+export DATABASE_URL=postgres://user:pass@localhost:5432/ppbot
+npm start
+```
+
+If you prefer, set the variables in a `.env` file and run `npm start`.
 
 ## Usage
 
@@ -49,8 +99,20 @@ You can also celebrate non-user concepts:
 
 - `/leaderboard` - Display the top 10 users and top 10 things on their respective leaderboards
 - `/score` - Check your current score
+- `/help` - Show usage tips and examples
 
 ## Setup
+
+### Quick Setup (Local)
+
+If you already have a Slack app:
+
+```bash
+cp .env.example .env
+# fill in SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET, DATABASE_URL
+npm install
+npm start
+```
 
 ### Prerequisites
 
@@ -90,9 +152,10 @@ npm install
         - `mpim:history`
         - `commands`
     - **Socket Mode**: Enable Socket Mode and create an App-Level Token with `connections:write` scope
-    - **Slash Commands**: Create two commands:
+    - **Slash Commands**: Create three commands:
         - `/leaderboard` - Description: "Show the leaderboard"
         - `/score` - Description: "Show your score"
+        - `/help` - Description: "Show help"
     - **Event Subscriptions**: Enable events and subscribe to:
         - `message.channels`
         - `message.groups`
@@ -113,7 +176,26 @@ cp .env.example .env
     - `SLACK_SIGNING_SECRET`: App signing secret
     - (Optional) `DATABASE_URL`: e.g. `postgres://user:pass@localhost:5432/ppbot`
 
-### Running the Bot
+## Configuration
+
+Required:
+
+- `SLACK_BOT_TOKEN` - Slack bot token (starts with `xoxb-`)
+- `SLACK_APP_TOKEN` - Slack app token (starts with `xapp-`)
+- `SLACK_SIGNING_SECRET` - Slack signing secret
+
+Optional:
+
+- `DATABASE_URL` - PostgreSQL connection string for persistent storage
+- `LOG_LEVEL` - `error` | `warn` | `info` | `debug` (defaults to `info` in production, `debug` otherwise)
+- `NODE_ENV` - `development` | `production` | `test` (defaults to `development`)
+- `PORT` / `RAILWAY_PORT` - Port to bind the Slack Socket Mode listener (defaults to `3000`)
+
+Environment variables are validated on startup; missing or invalid values will fail fast with a clear error.
+For production deploys, set `NODE_ENV=production` (or keep `LOG_LEVEL=info`) to avoid noisy logs.
+For a full reference, see `docs/CONFIGURATION.md`.
+
+## Running the Bot
 
 ```bash
 npm start
@@ -122,21 +204,24 @@ npm start
 If `DATABASE_URL` is not provided, DB-backed features will warn and score persistence won't work; tests always use an
 in-memory database.
 
-### Running Tests
+## Running Tests
 
 ```bash
 npm test
 ```
 
-### Database & Storage
+## Database & Storage
 
 The current implementation uses PostgreSQL (or pg-mem in tests) with three tables:
 
 - `leaderboard(user_id PK, score, created_at, updated_at)`
 - `thing_leaderboard(thing_name PK, score, created_at, updated_at)`
 - `vote_history(id PK, voter_id, voted_user_id, vote_type, channel_id?, message_ts?, created_at)`
+- `message_dedupe(id PK, channel_id, message_ts, created_at)` for replay protection
 
 Migrations: `npm run migrate` will create the tables on a real database.
+The application also runs migrations on startup when `DATABASE_URL` is set.
+For programmatic use, you can pass `migrate(pool, { maxAttempts, delayMs })` to tune retry behavior.
 
 ## How It Works
 
@@ -149,6 +234,38 @@ The bot listens to messages. When it detects voting syntax it:
 
 The `/leaderboard` command surfaces both leaderboards, and `/score` reports the calling user's score.
 
+## Architecture
+
+```
+Slack (Socket Mode)
+        |
+        v
+   Slack Bolt App
+        |
+        v
+ PostgreSQL (leaderboard, thing_leaderboard, vote_history)
+```
+
+## Support
+
+Please open a GitHub issue for help or feature requests.
+
+## FAQ
+
+**Does this require a public HTTP endpoint?**  
+No. The bot uses Slack Socket Mode, so no inbound HTTP endpoint is required.
+
+**Why do I see "DATABASE_URL not set"?**  
+You can run without persistence, but leaderboards reset on restart. Set `DATABASE_URL` for PostgreSQL storage.
+
+**Why are some votes ignored?**  
+Duplicate events are deduplicated to prevent double-counting. Repeated targets in the same message are ignored.
+
+## Limitations
+
+- Socket Mode is required (no public HTTP endpoints).
+- Votes are deduplicated per message; repeated targets in the same message are ignored.
+
 ## Development Notes
 
 - Tests use an ephemeral pg-mem backed pool substitute to avoid dangling sockets.
@@ -156,6 +273,15 @@ The `/leaderboard` command surfaces both leaderboards, and `/score` reports the 
 - Coverage thresholds enforce a baseline to catch regressions early.
 - Vote parsing sanitizes user and thing targets with the well-maintained [
   `validator`](https://github.com/validatorjs/validator.js) library before interacting with the database.
+
+## Security
+
+Please report vulnerabilities via GitHub Security Advisories. Do not email maintainers.
+See `SECURITY.md` for details.
+
+## Contributing
+
+See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
 
 ## License
 

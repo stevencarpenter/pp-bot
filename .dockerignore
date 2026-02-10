@@ -3,11 +3,9 @@ npm-debug.log
 dist
 .git
 .github
+.serena
 .env
 .env.*
-Dockerfile*
 .gitignore
-Dockerfile
 **/.DS_Store
 coverage
-

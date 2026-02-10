@@ -15,10 +15,11 @@
 4. [Environment Variables](#environment-variables)
 5. [Deployment](#deployment)
 6. [Post-Deployment Verification](#post-deployment-verification)
-7. [Monitoring & Logging](#monitoring--logging)
-8. [Troubleshooting](#troubleshooting)
-9. [Cost Optimization](#cost-optimization)
-10. [Rollback Procedures](#rollback-procedures)
+7. [Slack App Setup](#slack-app-setup)
+8. [Monitoring & Logging](#monitoring--logging)
+9. [Troubleshooting](#troubleshooting)
+10. [Cost Optimization](#cost-optimization)
+11. [Rollback Procedures](#rollback-procedures)
 
 ---
 
@@ -62,18 +63,18 @@ railway login
 ### Step 1: Create New Project
 
 1. **Navigate to Railway Dashboard**
-    - Go to https://railway.app
-    - Click "New Project"
+   - Go to https://railway.app
+   - Click "New Project"
 
 2. **Connect GitHub Repository**
-    - Select "Deploy from GitHub repo"
-    - Authorize Railway to access your GitHub
-    - Select `stevencarpenter/pp-bot` repository
+   - Select "Deploy from GitHub repo"
+   - Authorize Railway to access your GitHub
+   - Select `stevencarpenter/pp-bot` repository
 
 3. **Configure Initial Settings**
-    - Project name: `pp-bot-production`
-    - Environment: `production`
-    - Branch: `main`
+   - Project name: `<your-project-name>`
+   - Environment: `production`
+   - Branch: `main`
 
 ### Step 2: Configure Build Settings
 
@@ -97,26 +98,63 @@ npm start
 20.x
 ```
 
-### Step 3: Create railway.toml
+### Step 3: Environment configuration
 
-In your repository root, create `railway.toml`:
+Set required environment variables in Railway (see [Environment Variables](#environment-variables)).
 
-```toml
-[build]
-builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build"
+---
 
-[deploy]
-startCommand = "npm start"
-healthcheckPath = "/health"
-healthcheckTimeout = 100
-healthcheckInterval = 30
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 10
+## Slack App Setup
 
-[env]
-NODE_ENV = "production"
-```
+### Step 1: Create a Slack App
+
+1. Go to https://api.slack.com/apps
+2. Click **Create New App** → **From scratch**
+3. Name your app and select your workspace
+
+### Step 2: Enable Socket Mode
+
+1. Open **Socket Mode**
+2. Toggle **Enable Socket Mode**
+3. Create an **App-Level Token** with `connections:write`
+4. Save the token as `SLACK_APP_TOKEN`
+
+### Step 3: OAuth Scopes
+
+In **OAuth & Permissions**, add these bot token scopes:
+
+- `app_mentions:read`
+- `chat:write`
+- `channels:history`
+- `channels:read`
+- `groups:history`
+- `groups:read`
+- `im:history`
+- `mpim:history`
+- `commands`
+
+Install the app to your workspace and save the bot token as `SLACK_BOT_TOKEN`.
+
+### Step 4: Slash Commands
+
+Create the following commands in **Slash Commands**:
+
+- `/leaderboard` - Show the leaderboard
+- `/score` - Show your score
+- `/help` - Show help
+
+### Step 5: Event Subscriptions
+
+Enable **Event Subscriptions** and subscribe to:
+
+- `message.channels`
+- `message.groups`
+- `message.im`
+- `message.mpim`
+
+### Step 6: Signing Secret
+
+Copy the **Signing Secret** from **Basic Information** and set it as `SLACK_SIGNING_SECRET`.
 
 ---
 
@@ -134,64 +172,57 @@ NODE_ENV = "production"
 ```sql
 CREATE TABLE IF NOT EXISTS leaderboard
 (
-    user_id
-    VARCHAR
-(
-    20
-) PRIMARY KEY,
-    score INTEGER DEFAULT 0 NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW
-(
-),
-    updated_at TIMESTAMP DEFAULT NOW
-(
-)
-    );
+    user_id    VARCHAR(20) PRIMARY KEY,
+    score      INTEGER   DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_user ON leaderboard (user_id);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_score ON leaderboard (score DESC);
 
-CREATE INDEX idx_leaderboard_score ON leaderboard (score DESC);
+CREATE TABLE IF NOT EXISTS thing_leaderboard
+(
+    thing_name VARCHAR(64) PRIMARY KEY,
+    score      INTEGER   DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_thing_leaderboard_score ON thing_leaderboard (score DESC);
 
 CREATE TABLE IF NOT EXISTS vote_history
 (
-    id
-    SERIAL
-    PRIMARY
-    KEY,
-    voter_id
-    VARCHAR
-(
-    20
-) NOT NULL,
-    voted_user_id VARCHAR
-(
-    20
-) NOT NULL,
-    vote_type VARCHAR
-(
-    2
-) NOT NULL CHECK
-(
-    vote_type
-    IN
-(
-    '++',
-    '--'
-)),
-    channel_id VARCHAR
-(
-    20
-),
-    message_ts VARCHAR
-(
-    20
-),
-    created_at TIMESTAMP DEFAULT NOW
-(
-)
-    );
+    id            SERIAL PRIMARY KEY,
+    voter_id      VARCHAR(20) NOT NULL,
+    voted_user_id VARCHAR(20) NOT NULL,
+    vote_type     VARCHAR(2)  NOT NULL CHECK (vote_type IN ('++', '--')),
+    channel_id    VARCHAR(20),
+    message_ts    VARCHAR(20),
+    created_at    TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_vote_history_user ON vote_history (voted_user_id);
+CREATE INDEX IF NOT EXISTS idx_vote_history_created ON vote_history (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_vote_history_channel_message ON vote_history (channel_id, message_ts);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_vote_history_dedupe
+    ON vote_history (voter_id, voted_user_id, channel_id, message_ts)
+    WHERE channel_id IS NOT NULL AND message_ts IS NOT NULL;
 
-CREATE INDEX idx_vote_history_user ON vote_history (voted_user_id);
-CREATE INDEX idx_vote_history_created ON vote_history (created_at DESC);
+CREATE TABLE IF NOT EXISTS message_dedupe
+(
+    id         SERIAL PRIMARY KEY,
+    channel_id VARCHAR(20) NOT NULL,
+    message_ts VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (channel_id, message_ts)
+);
 ```
+
+Alternatively, you can rely on the built-in migration runner:
+
+```bash
+npm run migrate
+```
+
+The application also runs migrations automatically on startup when `DATABASE_URL` is set.
 
 ---
 
@@ -201,20 +232,23 @@ Configure in Railway Dashboard → Variables:
 
 ```bash
 # Slack Configuration
-SLACK_BOT_TOKEN=xoxb-your-bot-token-here
-SLACK_APP_TOKEN=xapp-your-app-token-here
+SLACK_BOT_TOKEN=your-bot-token-here
+SLACK_APP_TOKEN=your-app-token-here
 SLACK_SIGNING_SECRET=your-signing-secret-here
 
 # Application Configuration
 NODE_ENV=production
 LOG_LEVEL=info
-PORT=${{RAILWAY_STATIC_PORT}}
-HEALTH_PORT=3001
-
-# Monitoring (Optional)
-SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
-SENTRY_ENVIRONMENT=production
+DATABASE_URL=postgres://user:pass@host:5432/dbname
+PORT=3000
 ```
+
+Notes:
+
+- Railway provides `RAILWAY_PORT`; the app uses `PORT` or `RAILWAY_PORT`.
+- The app runs migrations automatically on startup when `DATABASE_URL` is set.
+- When using the Railway template, you'll be prompted for the Slack tokens during provisioning.
+- Railway config uses a pre-deploy migration hook; startup also runs migrations as a safety net.
 
 ---
 
@@ -242,22 +276,6 @@ railway logs
 
 ## Post-Deployment Verification
 
-### Check Health Endpoint
-
-```bash
-curl https://pp-bot-production.up.railway.app/health
-```
-
-Expected response:
-
-```json
-{
-  "status": "ok",
-  "timestamp": "2025-10-23T12:00:00.000Z",
-  "uptime": "120s"
-}
-```
-
 ### Test Bot in Slack
 
 ```
@@ -267,6 +285,12 @@ Expected response:
 ```
 
 ---
+
+## Health and Readiness
+
+pp-bot runs in Slack Socket Mode and does not expose an HTTP health endpoint by default.
+Use Railway's deployment status and logs to verify readiness, or add a lightweight HTTP
+endpoint if you need external health checks.
 
 ## Monitoring & Logging
 
@@ -286,7 +310,7 @@ Use services like:
 - Better Uptime
 - Pingdom
 
-Monitor: `https://pp-bot-production.up.railway.app/health`
+Monitor via the Railway deployment status page or add a lightweight health check if you expose one.
 
 ---
 
@@ -319,8 +343,7 @@ railway run psql $DATABASE_URL -c "SELECT 1"
 
 - $5 credit per month
 - ~500 MB RAM
-- Optimize connection pool: `DATABASE_POOL_SIZE=5`
-- Implement caching for leaderboard
+- Keep pool sizing modest for small instances
 
 ### Monitor Usage
 
@@ -375,7 +398,7 @@ railway rollback <deployment-id>
 - [ ] Database schema created
 - [ ] Environment variables configured
 - [ ] Automatic deployments enabled
-- [ ] Health checks passing
+- [ ] Deployments healthy in Railway
 - [ ] Bot responding in Slack
 - [ ] Monitoring set up
 - [ ] Backups configured
