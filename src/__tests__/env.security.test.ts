@@ -8,9 +8,9 @@ describe('environment security validation', () => {
   });
 
   function setValidSlackEnv() {
-    process.env.SLACK_BOT_TOKEN = 'xoxb-1234567890-valid';
-    process.env.SLACK_APP_TOKEN = 'xapp-1234567890-valid';
-    process.env.SLACK_SIGNING_SECRET = 'super-secret-signing-value';
+    process.env.SLACK_BOT_TOKEN = 'xoxb-1234567890-valid'; // gitleaks:allow
+    process.env.SLACK_APP_TOKEN = 'xapp-1234567890-valid'; // gitleaks:allow
+    process.env.SLACK_SIGNING_SECRET = 'super-secret-signing-value'; // gitleaks:allow
     process.env.NODE_ENV = 'test';
     process.env.LOG_LEVEL = 'info';
     process.env.DATABASE_URL = 'pgmem://env-test';
@@ -18,14 +18,14 @@ describe('environment security validation', () => {
 
   test('rejects malformed Slack token formats', () => {
     setValidSlackEnv();
-    process.env.SLACK_BOT_TOKEN = 'xoxp-invalid';
+    process.env.SLACK_BOT_TOKEN = 'xoxp-invalid'; // gitleaks:allow
 
     expect(() => validateEnv()).toThrow('SLACK_BOT_TOKEN must start with "xoxb-".');
   });
 
   test('rejects placeholder secrets', () => {
     setValidSlackEnv();
-    process.env.SLACK_APP_TOKEN = 'xapp-your-app-token';
+    process.env.SLACK_APP_TOKEN = 'xapp-your-app-token'; // gitleaks:allow
 
     expect(() => validateEnv()).toThrow('SLACK_APP_TOKEN appears to be a placeholder value.');
   });
