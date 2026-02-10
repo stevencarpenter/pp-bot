@@ -69,7 +69,7 @@ export function createApp() {
   // Message handler
   app.message(async ({ message, say, body }) => {
     let dedupeKey: string | null = null;
-    let persistedVoteCount = 0;
+    let hasPersistentWrite = false;
     let voterId: string | null = null;
     let channelId: string | undefined;
     let messageTs: string | undefined;
@@ -195,17 +195,17 @@ export function createApp() {
               });
               continue;
             }
+            hasPersistentWrite = true;
             const newScore = await updateUserScore(vote.targetId, delta);
             const actionWord = vote.action === '++' ? 'increased' : 'decreased';
             results.push(`<@${vote.targetId}>'s score ${actionWord} to ${newScore}`);
-            persistedVoteCount += 1;
             continue;
           }
 
           const newScore = await updateThingScore(vote.targetId, delta);
           const actionWord = vote.action === '++' ? 'increased' : 'decreased';
           results.push(`Score for *${vote.targetId}* ${actionWord} to ${newScore}`);
-          persistedVoteCount += 1;
+          hasPersistentWrite = true;
         } catch (voteError) {
           if (reservation) {
             abuseController.releaseReservedVote(reservation);
@@ -225,7 +225,7 @@ export function createApp() {
         await say(blockedWarning);
       }
     } catch (err) {
-      if (dedupeKey && persistedVoteCount === 0) {
+      if (dedupeKey && !hasPersistentWrite) {
         try {
           await removeMessageDedupeByKey(dedupeKey);
           logger.warn('Released message dedupe key after processing failure', {

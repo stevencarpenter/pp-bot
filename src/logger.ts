@@ -31,6 +31,10 @@ function redactValue(value: unknown, seen: WeakSet<object> = new WeakSet()): unk
     return cloned;
   }
   if (Array.isArray(value)) {
+    if (seen.has(value)) {
+      return '[Circular]';
+    }
+    seen.add(value);
     return value.map((item) => redactValue(item, seen));
   }
   if (value instanceof Set) {

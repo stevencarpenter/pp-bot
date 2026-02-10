@@ -58,4 +58,21 @@ describe('logger redaction', () => {
     expect(metadata[0][1]).toBe('[REDACTED_SLACK_TOKEN]');
     expect(metadata[1][1]).toContain('[REDACTED]@');
   });
+
+  test('handles self-referential arrays without recursion overflow', () => {
+    process.env.LOG_LEVEL = 'error';
+
+    const capturedCalls: unknown[][] = [];
+    console.error = (...args: unknown[]) => capturedCalls.push(args);
+
+    const circularArray: unknown[] = ['safe'];
+    circularArray.push(circularArray);
+
+    logger.error('circular array payload', circularArray);
+
+    const payloadArg = capturedCalls[0]?.[2] as unknown[];
+    expect(Array.isArray(payloadArg)).toBe(true);
+    expect(payloadArg[0]).toBe('safe');
+    expect(payloadArg[1]).toBe('[Circular]');
+  });
 });

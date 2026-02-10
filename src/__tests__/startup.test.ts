@@ -152,6 +152,56 @@ describe('Bot startup', () => {
         appSpy.mockRestore();
       }
     });
+
+    test('should keep dedupe key when vote history write succeeded before later failure', async () => {
+      await getPool().query('DELETE FROM message_dedupe');
+      await getPool().query('DELETE FROM vote_history');
+
+      const updateUserSpy = jest
+        .spyOn(database, 'updateUserScore')
+        .mockRejectedValueOnce(new Error('forced user score failure'));
+
+      const handlers: CapturedMessageHandler[] = [];
+      const appSpy = jest.spyOn(bolt, 'App') as unknown as jest.SpyInstance;
+      appSpy.mockImplementation(
+        () =>
+          ({
+            start: jest.fn().mockResolvedValue(undefined),
+            message: (handler: CapturedMessageHandler) => handlers.push(handler),
+            command: jest.fn(),
+          }) as unknown as bolt.App
+      );
+
+      try {
+        createApp();
+        expect(handlers).toHaveLength(1);
+
+        const handler = handlers[0];
+        const say = jest.fn();
+        const message = {
+          text: '<@UTARGET> ++',
+          user: 'UVOTER',
+          channel: 'C_ALLOWED',
+          ts: '1700000000.000102',
+        };
+        const body = { event_id: 'Ev-failure-002' };
+
+        await handler({ message, body, say });
+
+        expect(say).toHaveBeenCalledWith(
+          'Sorry, something went wrong processing your vote. Please try again later.'
+        );
+
+        const dedupeRows = await getPool().query(
+          'SELECT dedupe_key FROM message_dedupe WHERE dedupe_key = $1',
+          ['event:Ev-failure-002']
+        );
+        expect(dedupeRows.rowCount).toBe(1);
+      } finally {
+        updateUserSpy.mockRestore();
+        appSpy.mockRestore();
+      }
+    });
   });
 
   describe('start function migration logic', () => {
@@ -216,9 +266,10 @@ describe('Bot startup', () => {
       mockMigrate.mockResolvedValue(false);
 
       // Mock process.exit to prevent actual exit
-      const mockExit = jest
-        .spyOn(process, 'exit')
-        .mockImplementation(((_: number) => undefined as never) as typeof process.exit);
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation(((code: number) => {
+        void code;
+        return undefined as never;
+      }) as typeof process.exit);
 
       await start();
 
@@ -241,9 +292,10 @@ describe('Bot startup', () => {
       mockMigrate.mockRejectedValue(migrationError);
 
       // Mock process.exit to prevent actual exit
-      const mockExit = jest
-        .spyOn(process, 'exit')
-        .mockImplementation(((_: number) => undefined as never) as typeof process.exit);
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation(((code: number) => {
+        void code;
+        return undefined as never;
+      }) as typeof process.exit);
 
       await start();
 
