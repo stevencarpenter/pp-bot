@@ -2,13 +2,12 @@ import { App, LogLevel } from '@slack/bolt';
 import { parseVote } from './utils/vote';
 import {
   removeMessageDedupeByKey,
-  recordMessageIfNewByKey,
   getTopThings,
   getTopUsers,
   getUserScore,
-  recordVote,
+  recordMessageIfNewByKey,
+  recordVoteAndUpdateUserScore,
   updateThingScore,
-  updateUserScore,
 } from './storage/database';
 import { waitForDatabase } from './db';
 import { getPool } from './storage/pool';
@@ -179,11 +178,17 @@ export function createApp() {
         const delta = vote.action === '++' ? 1 : -1;
         try {
           if (vote.targetType === 'user') {
-            const recorded = await recordVote(voterId, vote.targetId, vote.action, {
-              channelId,
-              messageTs,
-            });
-            if (!recorded) {
+            const voteResult = await recordVoteAndUpdateUserScore(
+              voterId,
+              vote.targetId,
+              vote.action,
+              delta,
+              {
+                channelId,
+                messageTs,
+              }
+            );
+            if (!voteResult.recorded) {
               if (reservation) {
                 abuseController.releaseReservedVote(reservation);
               }
@@ -195,10 +200,12 @@ export function createApp() {
               });
               continue;
             }
+            if (typeof voteResult.score !== 'number') {
+              throw new Error('Vote persisted but leaderboard score was not returned');
+            }
             hasPersistentWrite = true;
-            const newScore = await updateUserScore(vote.targetId, delta);
             const actionWord = vote.action === '++' ? 'increased' : 'decreased';
-            results.push(`<@${vote.targetId}>'s score ${actionWord} to ${newScore}`);
+            results.push(`<@${vote.targetId}>'s score ${actionWord} to ${voteResult.score}`);
             continue;
           }
 

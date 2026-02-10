@@ -153,13 +153,13 @@ describe('Bot startup', () => {
       }
     });
 
-    test('should keep dedupe key when vote history write succeeded before later failure', async () => {
+    test('should release dedupe key when atomic user vote persistence fails', async () => {
       await getPool().query('DELETE FROM message_dedupe');
       await getPool().query('DELETE FROM vote_history');
 
-      const updateUserSpy = jest
-        .spyOn(database, 'updateUserScore')
-        .mockRejectedValueOnce(new Error('forced user score failure'));
+      const recordAndScoreSpy = jest
+        .spyOn(database, 'recordVoteAndUpdateUserScore')
+        .mockRejectedValueOnce(new Error('forced user vote failure'));
 
       const handlers: CapturedMessageHandler[] = [];
       const appSpy = jest.spyOn(bolt, 'App') as unknown as jest.SpyInstance;
@@ -196,9 +196,9 @@ describe('Bot startup', () => {
           'SELECT dedupe_key FROM message_dedupe WHERE dedupe_key = $1',
           ['event:Ev-failure-002']
         );
-        expect(dedupeRows.rowCount).toBe(1);
+        expect(dedupeRows.rowCount).toBe(0);
       } finally {
-        updateUserSpy.mockRestore();
+        recordAndScoreSpy.mockRestore();
         appSpy.mockRestore();
       }
     });

@@ -113,6 +113,20 @@ describe('maintenance retention cleanup', () => {
     expect(() => getMaintenanceConfig()).toThrow('Invalid MAINTENANCE_DEDUPE_RETENTION_DAYS');
   });
 
+  test('parses MAINTENANCE_ENABLED values with surrounding whitespace', () => {
+    process.env.MAINTENANCE_ENABLED = ' false \n';
+
+    const config = getMaintenanceConfig();
+    expect(config.enabled).toBe(false);
+  });
+
+  test('rejects partially numeric maintenance day values', () => {
+    process.env.MAINTENANCE_ENABLED = 'true';
+    process.env.MAINTENANCE_DEDUPE_RETENTION_DAYS = '14days';
+
+    expect(() => getMaintenanceConfig()).toThrow('Invalid MAINTENANCE_DEDUPE_RETENTION_DAYS');
+  });
+
   test('scheduleMaintenance returns a timer handle', () => {
     const timer = scheduleMaintenance({
       enabled: true,

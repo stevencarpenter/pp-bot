@@ -48,11 +48,29 @@ describe('database SSL policy', () => {
     expect(getDatabaseSslConfig().ssl).toEqual({ rejectUnauthorized: false });
   });
 
+  test('trims ALLOW_INSECURE_DB_SSL before parsing', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.DATABASE_URL = 'postgres://user:pass@localhost:5432/db';
+    process.env.DB_SSL_MODE = 'require';
+    process.env.ALLOW_INSECURE_DB_SSL = ' true \n';
+
+    expect(() => assertSecureDbSslPolicy()).not.toThrow();
+    expect(getDatabaseSslConfig().allowInsecure).toBe(true);
+  });
+
   test('invalid DB_SSL_MODE is rejected', () => {
     process.env.NODE_ENV = 'production';
     process.env.DB_SSL_MODE = 'invalid-mode';
 
     expect(() => getDatabaseSslConfig()).toThrow('Invalid DB_SSL_MODE');
+  });
+
+  test('trims DB_SSL_MODE before parsing', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.DB_SSL_MODE = ' verify-full ';
+
+    const config = getDatabaseSslConfig();
+    expect(config.mode).toBe('verify-full');
   });
 
   test('invalid ALLOW_INSECURE_DB_SSL is rejected', () => {

@@ -44,6 +44,13 @@ describe('environment security validation', () => {
     }
   });
 
+  test('rejects partially numeric maintenance env values', () => {
+    setValidSlackEnv();
+    process.env.MAINTENANCE_DEDUPE_RETENTION_DAYS = '30days';
+
+    expect(() => validateEnv()).toThrow('Invalid MAINTENANCE_DEDUPE_RETENTION_DAYS');
+  });
+
   test('accepts valid secure configuration', () => {
     setValidSlackEnv();
     process.env.DB_SSL_MODE = 'verify-full';

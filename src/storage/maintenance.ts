@@ -24,7 +24,7 @@ function parseBooleanEnv(env: NodeJS.ProcessEnv, name: string, defaultValue: boo
   if (!rawValue || rawValue.trim() === '') {
     return defaultValue;
   }
-  const normalized = rawValue.toLowerCase();
+  const normalized = rawValue.trim().toLowerCase();
   if (BOOLEAN_TRUE.has(normalized)) return true;
   if (BOOLEAN_FALSE.has(normalized)) return false;
   const allowedValues = [...BOOLEAN_TRUE, ...BOOLEAN_FALSE];
@@ -38,7 +38,11 @@ function parseDaysEnv(env: NodeJS.ProcessEnv, name: string, defaultValue: number
   if (!rawValue || rawValue.trim() === '') {
     return defaultValue;
   }
-  const parsed = Number.parseInt(rawValue, 10);
+  const normalized = rawValue.trim();
+  if (!/^-?\d+$/.test(normalized)) {
+    throw new Error(`Invalid ${name} value "${rawValue}". Expected an integer >= 1.`);
+  }
+  const parsed = Number.parseInt(normalized, 10);
   if (!Number.isFinite(parsed) || Number.isNaN(parsed) || parsed < 1) {
     throw new Error(`Invalid ${name} value "${rawValue}". Expected an integer >= 1.`);
   }

@@ -37,7 +37,12 @@ function parseIntegerEnv(
 ): number | undefined {
   const rawValue = env[name];
   if (!rawValue || rawValue.trim() === '') return undefined;
-  const parsed = Number.parseInt(rawValue, 10);
+  const normalized = rawValue.trim();
+  if (!/^-?\d+$/.test(normalized)) {
+    errors.push(`Invalid ${name} "${rawValue}". Expected an integer >= ${minimum}.`);
+    return undefined;
+  }
+  const parsed = Number.parseInt(normalized, 10);
   if (!Number.isFinite(parsed) || Number.isNaN(parsed) || parsed < minimum) {
     errors.push(`Invalid ${name} "${rawValue}". Expected an integer >= ${minimum}.`);
     return undefined;

@@ -24,7 +24,7 @@ function parseBooleanEnv(env: NodeJS.ProcessEnv, name: string, defaultValue: boo
   if (rawValue === undefined || rawValue.trim() === '') {
     return defaultValue;
   }
-  const normalized = rawValue.toLowerCase();
+  const normalized = rawValue.trim().toLowerCase();
   if (BOOLEAN_TRUE.has(normalized)) return true;
   if (BOOLEAN_FALSE.has(normalized)) return false;
   const allowedValues = [...BOOLEAN_TRUE, ...BOOLEAN_FALSE];
@@ -38,7 +38,7 @@ function getSslMode(env: NodeJS.ProcessEnv): DbSslMode {
   if (!raw || raw.trim() === '') {
     return resolveNodeEnv(env) === 'production' ? 'verify-full' : 'disable';
   }
-  const normalized = raw.toLowerCase();
+  const normalized = raw.trim().toLowerCase();
   if (DB_SSL_MODES.includes(normalized as DbSslMode)) {
     return normalized as DbSslMode;
   }
