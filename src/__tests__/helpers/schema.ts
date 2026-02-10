@@ -36,6 +36,10 @@ export async function ensureSchema() {
         CREATE INDEX IF NOT EXISTS idx_vote_history_user ON vote_history (voted_user_id);
         CREATE INDEX IF NOT EXISTS idx_vote_history_created ON vote_history (created_at DESC);
         CREATE INDEX IF NOT EXISTS idx_vote_history_channel_message ON vote_history (channel_id, message_ts);
+        CREATE INDEX IF NOT EXISTS idx_vote_history_voter_created ON vote_history (voter_id, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_vote_history_channel_created ON vote_history (channel_id, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_vote_history_voter_target_created ON vote_history (voter_id, voted_user_id, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_vote_history_downvote_voter_created ON vote_history (vote_type, voter_id, created_at DESC);
         CREATE UNIQUE INDEX IF NOT EXISTS idx_vote_history_dedupe
             ON vote_history (voter_id, voted_user_id, channel_id, message_ts)
             WHERE channel_id IS NOT NULL AND message_ts IS NOT NULL;
@@ -43,11 +47,14 @@ export async function ensureSchema() {
         CREATE TABLE IF NOT EXISTS message_dedupe
         (
             id         SERIAL PRIMARY KEY,
-            channel_id VARCHAR(20) NOT NULL,
-            message_ts VARCHAR(20) NOT NULL,
+            channel_id VARCHAR(20),
+            message_ts VARCHAR(20),
+            dedupe_key VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (dedupe_key),
             UNIQUE (channel_id, message_ts)
         );
+        CREATE INDEX IF NOT EXISTS idx_message_dedupe_created ON message_dedupe (created_at DESC);
     `;
   await pool.query(ddl);
   initialized = true;

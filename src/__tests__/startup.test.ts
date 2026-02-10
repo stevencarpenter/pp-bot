@@ -6,6 +6,7 @@ import { createApp, start } from '../index';
 import { getPool } from '../storage/pool';
 import migrate from '../scripts/migrate';
 import logger from '../logger';
+import { ensureSchema } from './helpers/schema';
 
 // Mock the migrate function
 jest.mock('../scripts/migrate');
@@ -24,6 +25,10 @@ jest.mock('../logger', () => ({
 
 describe('Bot startup', () => {
   const originalEnv = { ...process.env };
+
+  beforeAll(async () => {
+    await ensureSchema();
+  });
 
   beforeEach(() => {
     // Set up test environment with pgmem URL
@@ -46,6 +51,47 @@ describe('Bot startup', () => {
     test('should throw error when required Slack env vars are missing', () => {
       delete process.env.SLACK_BOT_TOKEN;
       expect(() => createApp()).toThrow('Missing required environment variables: SLACK_BOT_TOKEN');
+    });
+
+    test('should dedupe blocked events before replying', async () => {
+      await getPool().query('DELETE FROM message_dedupe');
+      process.env.VOTE_ALLOWED_CHANNEL_IDS = 'C_ALLOWED';
+
+      const handlers: Array<(args: any) => Promise<void>> = [];
+      const appSpy = jest.spyOn(require('@slack/bolt'), 'App').mockImplementation(() => ({
+        start: jest.fn().mockResolvedValue(undefined),
+        message: (handler: any) => handlers.push(handler),
+        command: jest.fn(),
+      }));
+
+      try {
+        createApp();
+        expect(handlers).toHaveLength(1);
+
+        const handler = handlers[0];
+        const say = jest.fn();
+        const message = {
+          text: '<@UTARGET> ++',
+          user: 'UVOTER',
+          channel: 'C_BLOCKED',
+          ts: '1700000000.000100',
+        };
+        const body = { event_id: 'Ev-blocked-001' };
+
+        await handler({ message, body, say });
+        await handler({ message, body, say });
+
+        expect(say).toHaveBeenCalledTimes(1);
+        expect(say).toHaveBeenCalledWith('Voting is not enabled in this channel.');
+
+        const dedupeRows = await getPool().query(
+          'SELECT dedupe_key FROM message_dedupe WHERE dedupe_key = $1',
+          ['event:Ev-blocked-001']
+        );
+        expect(dedupeRows.rowCount).toBe(1);
+      } finally {
+        appSpy.mockRestore();
+      }
     });
   });
 

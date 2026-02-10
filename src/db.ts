@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import logger from './logger';
+import { assertSecureDbSslPolicy, getDatabaseSslConfig } from './security/db-ssl';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const g: any = globalThis as any;
 if (!g.__ALL_POOLS__) g.__ALL_POOLS__ = [];
@@ -62,9 +63,12 @@ function createPool(): any {
     g.__ALL_POOLS__.push(p);
     return p;
   }
+
+  assertSecureDbSslPolicy();
+  const sslConfig = getDatabaseSslConfig();
   const p = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    ssl: sslConfig.ssl,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 20000, // Increased from 5000 to 20000 for cloud environments

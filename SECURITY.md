@@ -11,3 +11,8 @@ Do not email maintainers. If you are unsure whether your report is security-sens
 open a private security advisory and include reproduction steps and impact details.
 
 We will acknowledge receipt within a reasonable timeframe and provide updates as we investigate.
+
+## Operational Security Notes
+
+- Security hardening baseline: `docs/SECURITY-HARDENING.md`
+- Secret rotation and incident response runbook: `docs/SECURITY-OPERATIONS.md`

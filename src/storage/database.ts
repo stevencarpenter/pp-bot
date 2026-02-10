@@ -3,6 +3,7 @@ import { VoteAction, VoteRecord } from '../types';
 import logger from '../logger';
 import { waitForDatabase } from '../db';
 import { getPool } from './pool';
+import { buildLegacyMessageDedupeKey } from '../utils/dedupe';
 
 type DatabaseError = {
   code?: string;
@@ -207,17 +208,33 @@ interface RecordVoteOptions {
   messageTs?: string;
 }
 
-export async function recordMessageIfNew(channelId: string, messageTs: string): Promise<boolean> {
+interface MessageDedupeOptions {
+  channelId?: string;
+  messageTs?: string;
+}
+
+export async function recordMessageIfNewByKey(
+  dedupeKey: string,
+  options: MessageDedupeOptions = {}
+): Promise<boolean> {
+  const { channelId, messageTs } = options;
   return withDatabaseRetry(async () => {
     const pool = getPool();
     const { rows } = await pool.query(
-      `INSERT INTO message_dedupe (channel_id, message_ts)
-             VALUES ($1, $2)
+      `INSERT INTO message_dedupe (dedupe_key, channel_id, message_ts)
+             VALUES ($1, $2, $3)
              ON CONFLICT DO NOTHING
              RETURNING id`,
-      [channelId, messageTs]
+      [dedupeKey, channelId ?? null, messageTs ?? null]
     );
     return rows.length > 0;
+  });
+}
+
+export async function recordMessageIfNew(channelId: string, messageTs: string): Promise<boolean> {
+  return recordMessageIfNewByKey(buildLegacyMessageDedupeKey(channelId, messageTs), {
+    channelId,
+    messageTs,
   });
 }
 
