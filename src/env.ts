@@ -101,12 +101,16 @@ export function validateEnv(options: EnvValidationOptions = {}): ValidatedEnv {
   parseIntegerEnv(process.env, 'MAINTENANCE_DEDUPE_RETENTION_DAYS', 1, errors);
   parseIntegerEnv(process.env, 'MAINTENANCE_VOTE_HISTORY_RETENTION_DAYS', 1, errors);
 
-  try {
-    getDatabaseSslConfig();
-    assertSecureDbSslPolicy();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    errors.push(message);
+  const hasDatabaseUrl =
+    typeof process.env.DATABASE_URL === 'string' && process.env.DATABASE_URL.trim() !== '';
+  if (hasDatabaseUrl) {
+    try {
+      getDatabaseSslConfig();
+      assertSecureDbSslPolicy();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(message);
+    }
   }
 
   try {

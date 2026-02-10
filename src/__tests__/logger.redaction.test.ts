@@ -2,7 +2,7 @@ import logger from '../logger';
 
 describe('logger redaction', () => {
   const originalEnv = { ...process.env };
-  const originalConsole: any = { ...console };
+  const originalConsole = { ...console };
 
   afterEach(() => {
     process.env = { ...originalEnv };
@@ -12,11 +12,10 @@ describe('logger redaction', () => {
   test('redacts slack tokens and database credentials in strings and objects', () => {
     process.env.LOG_LEVEL = 'error';
 
-    const capturedCalls: any[][] = [];
-    // @ts-ignore
-    console.error = (...args: any[]) => capturedCalls.push(args);
+    const capturedCalls: unknown[][] = [];
+    console.error = (...args: unknown[]) => capturedCalls.push(args);
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       token: 'xoxb-secret-token',
       db: 'postgres://user:pass123@localhost:5432/db',
     };
@@ -30,5 +29,33 @@ describe('logger redaction', () => {
     expect(output).toContain('[REDACTED]@');
     expect(output).not.toContain('pass123');
     expect(objectArg.self).toBe('[Circular]');
+  });
+
+  test('preserves useful shape for common built-in object types', () => {
+    process.env.LOG_LEVEL = 'error';
+
+    const capturedCalls: unknown[][] = [];
+    console.error = (...args: unknown[]) => capturedCalls.push(args);
+
+    const payload = {
+      createdAt: new Date('2026-02-10T00:00:00.000Z'),
+      tags: new Set(['alpha', 'beta']),
+      metadata: new Map([
+        ['token', 'xoxb-map-secret'],
+        ['db', 'postgres://u:p@host/db'],
+      ]),
+      body: Buffer.from('hello', 'utf8'),
+    };
+
+    logger.error('built-in payload', payload);
+
+    const objectArg = capturedCalls[0]?.[2] as Record<string, unknown>;
+    expect(objectArg.createdAt).toBe('2026-02-10T00:00:00.000Z');
+    expect(objectArg.tags).toEqual(['alpha', 'beta']);
+    expect(objectArg.body).toBe('<Buffer length=5>');
+
+    const metadata = objectArg.metadata as [unknown, unknown][];
+    expect(metadata[0][1]).toBe('[REDACTED_SLACK_TOKEN]');
+    expect(metadata[1][1]).toContain('[REDACTED]@');
   });
 });

@@ -1,6 +1,7 @@
 import { App, LogLevel } from '@slack/bolt';
 import { parseVote } from './utils/vote';
 import {
+  removeMessageDedupeByKey,
   recordMessageIfNewByKey,
   getTopThings,
   getTopUsers,
@@ -17,6 +18,26 @@ import { validateEnv } from './env';
 import { createAbuseController } from './security/abuse-controls';
 import { resolveMessageDedupeKey } from './utils/dedupe';
 import { getMaintenanceConfig, runMaintenance, scheduleMaintenance } from './storage/maintenance';
+
+type SlackMessageEnvelope = {
+  subtype?: unknown;
+  bot_id?: unknown;
+  text?: unknown;
+  user?: unknown;
+  channel?: unknown;
+  ts?: unknown;
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object') {
+    return {};
+  }
+  return value as Record<string, unknown>;
+}
+
+function asSlackMessageEnvelope(message: unknown): SlackMessageEnvelope {
+  return asRecord(message) as SlackMessageEnvelope;
+}
 
 function getLogLevel(): LogLevel {
   const { logLevel } = validateEnv({ requireSlack: false });
@@ -47,19 +68,27 @@ export function createApp() {
 
   // Message handler
   app.message(async ({ message, say, body }) => {
+    let dedupeKey: string | null = null;
+    let persistedVoteCount = 0;
+    let voterId: string | null = null;
+    let channelId: string | undefined;
+    let messageTs: string | undefined;
+    let eventId: string | undefined;
+
     try {
-      if ((message as any).subtype === 'bot_message' || (message as any).bot_id) return;
-      if (!('text' in message) || !('user' in message)) return;
-      const text = (message as any).text || '';
+      const envelope = asSlackMessageEnvelope(message);
+      if (envelope.subtype === 'bot_message' || envelope.bot_id) return;
+      if (typeof envelope.text !== 'string' || typeof envelope.user !== 'string') return;
+      const text = envelope.text;
       const votes = parseVote(text);
       if (votes.length === 0) return;
-      const channelId = (message as any).channel as string | undefined;
-      const messageTs = (message as any).ts as string | undefined;
-      const voterId = (message as any).user as string;
-      const eventId =
-        typeof (body as any)?.event_id === 'string' ? (body as any).event_id : undefined;
+      channelId = typeof envelope.channel === 'string' ? envelope.channel : undefined;
+      messageTs = typeof envelope.ts === 'string' ? envelope.ts : undefined;
+      voterId = envelope.user;
+      const bodyRecord = asRecord(body);
+      eventId = typeof bodyRecord.event_id === 'string' ? bodyRecord.event_id : undefined;
 
-      const dedupeKey = resolveMessageDedupeKey({ eventId, channelId, messageTs });
+      dedupeKey = resolveMessageDedupeKey({ eventId, channelId, messageTs });
       if (!dedupeKey) {
         logger.warn('Skipping vote processing due to missing dedupe metadata', {
           voterId,
@@ -159,7 +188,7 @@ export function createApp() {
                 abuseController.releaseReservedVote(reservation);
               }
               logger.info('Skipping duplicate vote record', {
-                voterId: (message as any).user,
+                voterId,
                 targetId: vote.targetId,
                 channelId,
                 messageTs,
@@ -169,12 +198,14 @@ export function createApp() {
             const newScore = await updateUserScore(vote.targetId, delta);
             const actionWord = vote.action === '++' ? 'increased' : 'decreased';
             results.push(`<@${vote.targetId}>'s score ${actionWord} to ${newScore}`);
+            persistedVoteCount += 1;
             continue;
           }
 
           const newScore = await updateThingScore(vote.targetId, delta);
           const actionWord = vote.action === '++' ? 'increased' : 'decreased';
           results.push(`Score for *${vote.targetId}* ${actionWord} to ${newScore}`);
+          persistedVoteCount += 1;
         } catch (voteError) {
           if (reservation) {
             abuseController.releaseReservedVote(reservation);
@@ -194,6 +225,23 @@ export function createApp() {
         await say(blockedWarning);
       }
     } catch (err) {
+      if (dedupeKey && persistedVoteCount === 0) {
+        try {
+          await removeMessageDedupeByKey(dedupeKey);
+          logger.warn('Released message dedupe key after processing failure', {
+            dedupeKey,
+            voterId,
+            channelId: channelId ?? null,
+            messageTs: messageTs ?? null,
+            eventId: eventId ?? null,
+          });
+        } catch (cleanupErr) {
+          logger.error(
+            'Failed to release message dedupe key after processing failure:',
+            cleanupErr
+          );
+        }
+      }
       logger.error('Error processing message event:', err);
       try {
         await say('Sorry, something went wrong processing your vote. Please try again later.');

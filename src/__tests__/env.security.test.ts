@@ -53,4 +53,13 @@ describe('environment security validation', () => {
     expect(validated.nodeEnv).toBe('test');
     expect(validated.logLevel).toBe('info');
   });
+
+  test('does not validate DB SSL settings when DATABASE_URL is unset', () => {
+    setValidSlackEnv();
+    delete process.env.DATABASE_URL;
+    process.env.DB_SSL_MODE = 'invalid-mode';
+    process.env.DB_SSL_CA_PEM_B64 = 'definitely-not-base64';
+
+    expect(() => validateEnv()).not.toThrow();
+  });
 });

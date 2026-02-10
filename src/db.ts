@@ -1,9 +1,28 @@
 import { Pool } from 'pg';
+import type { QueryResult } from 'pg';
 import logger from './logger';
 import { assertSecureDbSslPolicy, getDatabaseSslConfig } from './security/db-ssl';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const g: any = globalThis as any;
-if (!g.__ALL_POOLS__) g.__ALL_POOLS__ = [];
+
+type QueryParams = readonly unknown[] | undefined;
+type PoolEventHandler = (...args: unknown[]) => void;
+
+type PgMemClient = {
+  connect(): Promise<void>;
+  query(text: string, params?: QueryParams): Promise<QueryResult>;
+  end(): Promise<void>;
+};
+
+type PoolLike = Pool & { _isEphemeral?: boolean };
+
+type GlobalWithPools = typeof globalThis & { __ALL_POOLS__?: PoolLike[] };
+const g = globalThis as GlobalWithPools;
+
+function getAllPools(): PoolLike[] {
+  if (!g.__ALL_POOLS__) {
+    g.__ALL_POOLS__ = [];
+  }
+  return g.__ALL_POOLS__;
+}
 
 if (!process.env.DATABASE_URL) {
   logger.warn('⚠️  DATABASE_URL not set. Database features will not work until it is provided.');
@@ -11,48 +30,56 @@ if (!process.env.DATABASE_URL) {
 
 function createTestEphemeralPool() {
   // Uses pg-mem with a persistent client to maintain state between queries
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { newDb } = require('pg-mem');
-  const db = newDb();
-  const pgMem = db.adapters.createPg();
-  // Use a single persistent client instead of creating new ones per query
-  const sharedClient = new pgMem.Client();
+  let sharedClient: PgMemClient | null = null;
   let connected = false;
 
   // Store event listeners for testing
-  const listeners: { [event: string]: Array<(...args: any[]) => void> } = {};
+  const listeners: Record<string, PoolEventHandler[]> = {};
 
-  const poolLike: any = {
-    async query(text: string, params?: any[]) {
+  async function getSharedClient(): Promise<PgMemClient> {
+    if (sharedClient) {
+      return sharedClient;
+    }
+    const { newDb } = await import('pg-mem');
+    const db = newDb();
+    const pgMem = db.adapters.createPg();
+    sharedClient = new pgMem.Client() as PgMemClient;
+    return sharedClient;
+  }
+
+  const poolLike = {
+    async query(text: string, params?: QueryParams) {
+      const client = await getSharedClient();
       if (!connected) {
-        await sharedClient.connect();
+        await client.connect();
         connected = true;
       }
-      return await sharedClient.query(text, params);
+      return await client.query(text, params);
     },
     async end() {
-      if (connected) {
+      if (connected && sharedClient) {
         await sharedClient.end();
         connected = false;
+        sharedClient = null;
       }
     },
-    on(event: string, handler: (...args: any[]) => void) {
+    on(event: string, handler: PoolEventHandler) {
       if (!listeners[event]) {
         listeners[event] = [];
       }
       listeners[event].push(handler);
     },
-    emit(event: string, ...args: any[]) {
+    emit(event: string, ...args: unknown[]) {
       if (listeners[event]) {
         listeners[event].forEach((handler) => handler(...args));
       }
     },
     _isEphemeral: true,
   };
-  return poolLike;
+  return poolLike as unknown as PoolLike;
 }
 
-function createPool(): any {
+function createPool(): PoolLike {
   if (
     process.env.NODE_ENV === 'test' &&
     process.env.DATABASE_URL &&
@@ -60,7 +87,7 @@ function createPool(): any {
   ) {
     // Ephemeral per-query client; no long-lived sockets.
     const p = createTestEphemeralPool();
-    g.__ALL_POOLS__.push(p);
+    getAllPools().push(p);
     return p;
   }
 
@@ -73,11 +100,11 @@ function createPool(): any {
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 20000, // Increased from 5000 to 20000 for cloud environments
   });
-  g.__ALL_POOLS__.push(p);
+  getAllPools().push(p);
   return p;
 }
 
-export const pool: any = createPool();
+export const pool: PoolLike = createPool();
 
 // Attach listeners for all pools (including ephemeral for testing)
 pool.on('connect', () => logger.info('✓ Database connection established'));
@@ -91,7 +118,7 @@ pool.on('error', (err: unknown) => logger.error('✗ Unexpected database error:'
  */
 export async function waitForDatabase(maxRetries = 10, delayMs = 1000): Promise<void> {
   // Skip wait for ephemeral test pools
-  if (pool._isEphemeral) {
+  if (pool._isEphemeral === true) {
     logger.info('Using ephemeral test pool, skipping connection check');
     return;
   }

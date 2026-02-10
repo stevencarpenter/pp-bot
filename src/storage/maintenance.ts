@@ -27,7 +27,10 @@ function parseBooleanEnv(env: NodeJS.ProcessEnv, name: string, defaultValue: boo
   const normalized = rawValue.toLowerCase();
   if (BOOLEAN_TRUE.has(normalized)) return true;
   if (BOOLEAN_FALSE.has(normalized)) return false;
-  throw new Error(`Invalid ${name} value "${rawValue}". Expected one of: true, false.`);
+  const allowedValues = [...BOOLEAN_TRUE, ...BOOLEAN_FALSE];
+  throw new Error(
+    `Invalid ${name} value "${rawValue}". Expected one of: ${allowedValues.join(', ')}.`
+  );
 }
 
 function parseDaysEnv(env: NodeJS.ProcessEnv, name: string, defaultValue: number): number {

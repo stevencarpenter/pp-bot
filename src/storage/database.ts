@@ -238,6 +238,13 @@ export async function recordMessageIfNew(channelId: string, messageTs: string): 
   });
 }
 
+export async function removeMessageDedupeByKey(dedupeKey: string): Promise<void> {
+  await withDatabaseRetry(async () => {
+    const pool = getPool();
+    await pool.query('DELETE FROM message_dedupe WHERE dedupe_key = $1', [dedupeKey]);
+  });
+}
+
 export async function recordVote(
   voterId: string,
   votedUserId: string,

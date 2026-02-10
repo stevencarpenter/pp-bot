@@ -4,6 +4,13 @@ import {
   getAbuseControlsConfig,
 } from '../security/abuse-controls';
 
+type AbuseControllerInternalState = {
+  pairLastSeen: Map<string, number>;
+  dailyDownvotes: Map<string, number>;
+  userWindow: Map<string, number[]>;
+  channelWindow: Map<string, number[]>;
+};
+
 function createConfig(overrides: Partial<AbuseControlsConfig> = {}): AbuseControlsConfig {
   return {
     maxTargetsPerMessage: 5,
@@ -280,10 +287,11 @@ describe('abuse controls', () => {
       now: stale,
     });
 
-    expect((controller as any).pairLastSeen.size).toBeGreaterThan(0);
-    expect((controller as any).dailyDownvotes.size).toBeGreaterThan(0);
-    expect((controller as any).userWindow.size).toBeGreaterThan(0);
-    expect((controller as any).channelWindow.size).toBeGreaterThan(0);
+    const internal = controller as unknown as AbuseControllerInternalState;
+    expect(internal.pairLastSeen.size).toBeGreaterThan(0);
+    expect(internal.dailyDownvotes.size).toBeGreaterThan(0);
+    expect(internal.userWindow.size).toBeGreaterThan(0);
+    expect(internal.channelWindow.size).toBeGreaterThan(0);
 
     const decision = controller.evaluateVote({
       voterId: 'U1',
@@ -294,10 +302,10 @@ describe('abuse controls', () => {
       now: new Date('2026-01-03T00:00:00.000Z'),
     });
     expect(decision.allowed).toBe(true);
-    expect((controller as any).pairLastSeen.size).toBe(0);
-    expect((controller as any).dailyDownvotes.size).toBe(0);
-    expect((controller as any).userWindow.size).toBe(0);
-    expect((controller as any).channelWindow.size).toBe(0);
+    expect(internal.pairLastSeen.size).toBe(0);
+    expect(internal.dailyDownvotes.size).toBe(0);
+    expect(internal.userWindow.size).toBe(0);
+    expect(internal.channelWindow.size).toBe(0);
   });
 
   test('parses env config and rejects invalid values', () => {

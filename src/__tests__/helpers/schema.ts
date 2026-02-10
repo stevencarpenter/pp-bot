@@ -51,9 +51,9 @@ export async function ensureSchema() {
             message_ts VARCHAR(20),
             dedupe_key VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
-            UNIQUE (dedupe_key),
             UNIQUE (channel_id, message_ts)
         );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_message_dedupe_key ON message_dedupe (dedupe_key);
         CREATE INDEX IF NOT EXISTS idx_message_dedupe_created ON message_dedupe (created_at DESC);
     `;
   await pool.query(ddl);

@@ -25,18 +25,24 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
     assertSecureDbSslPolicy();
   }
 
-  let client: any;
+  let client: Client | Pool | undefined;
   let shouldCloseClient = true;
+
+  const getClientOrThrow = (): Client | Pool => {
+    if (!client) {
+      throw new Error('Database client was not initialized');
+    }
+    return client;
+  };
 
   if (poolOverride) {
     client = poolOverride;
     shouldCloseClient = false;
   }
 
-  const createClient = () => {
+  const createClient = async () => {
     if (isPgMem) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { newDb } = require('pg-mem');
+      const { newDb } = await import('pg-mem');
       const db = newDb();
       const pgMem = db.adapters.createPg();
       return new pgMem.Client();
@@ -95,9 +101,9 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
           message_ts VARCHAR(20),
           dedupe_key VARCHAR(255) NOT NULL,
           created_at TIMESTAMP DEFAULT NOW(),
-          UNIQUE (dedupe_key),
           UNIQUE (channel_id, message_ts)
       );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_message_dedupe_key ON message_dedupe (dedupe_key);
       CREATE INDEX IF NOT EXISTS idx_message_dedupe_created ON message_dedupe (created_at DESC);
   `;
 
@@ -111,6 +117,7 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
       ALTER TABLE message_dedupe ALTER COLUMN channel_id DROP NOT NULL;
       ALTER TABLE message_dedupe ALTER COLUMN message_ts DROP NOT NULL;
       ALTER TABLE message_dedupe ALTER COLUMN dedupe_key SET NOT NULL;
+      ALTER TABLE message_dedupe DROP CONSTRAINT IF EXISTS message_dedupe_dedupe_key_key;
       CREATE UNIQUE INDEX IF NOT EXISTS idx_message_dedupe_key ON message_dedupe (dedupe_key);
   `;
 
@@ -141,12 +148,14 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
     if (isPgMem) {
       return;
     }
-    await client.query(upgradeMessageDedupeSql);
+    const activeClient = getClientOrThrow();
+    await activeClient.query(upgradeMessageDedupeSql);
   }
 
   async function dedupeVoteHistory(): Promise<void> {
+    const activeClient = getClientOrThrow();
     try {
-      await client.query(dedupeSql);
+      await activeClient.query(dedupeSql);
       return;
     } catch (error) {
       if (!isPgMem) {
@@ -154,7 +163,7 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
       }
     }
 
-    const result = await client.query(
+    const result = await activeClient.query(
       `
         SELECT id, voter_id, voted_user_id, channel_id, message_ts
         FROM vote_history
@@ -167,7 +176,7 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
     for (const row of result.rows || []) {
       const key = `${row.voter_id}|${row.voted_user_id}|${row.channel_id}|${row.message_ts}`;
       if (seen.has(key)) {
-        await client.query('DELETE FROM vote_history WHERE id = $1', [row.id]);
+        await activeClient.query('DELETE FROM vote_history WHERE id = $1', [row.id]);
       } else {
         seen.add(key);
       }
@@ -180,8 +189,9 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
   if (!poolOverride) {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        client = createClient();
-        await client.connect();
+        client = await createClient();
+        const connectClient = getClientOrThrow();
+        await connectClient.connect();
         break;
       } catch (error) {
         if (client?.end) {
@@ -208,21 +218,25 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
   }
 
   try {
-    await client.query('BEGIN');
-    await client.query(ddl);
+    const activeClient = getClientOrThrow();
+    await activeClient.query('BEGIN');
+    await activeClient.query(ddl);
     await upgradeMessageDedupeSchema();
     await dedupeVoteHistory();
-    await client.query(createDedupeIndexSql);
-    await client.query('COMMIT');
+    await activeClient.query(createDedupeIndexSql);
+    await activeClient.query('COMMIT');
     logger.info('✅ Migration complete');
     return true;
   } catch (error) {
-    await client.query('ROLLBACK');
+    if (client) {
+      const activeClient = getClientOrThrow();
+      await activeClient.query('ROLLBACK');
+    }
     logger.error('Migration failed:', error);
     process.exitCode = 1;
     return false;
   } finally {
-    if (shouldCloseClient) {
+    if (shouldCloseClient && client) {
       await client.end();
     }
   }
