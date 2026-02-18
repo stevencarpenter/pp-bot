@@ -31,6 +31,7 @@ with that handle exists.
 - [Support](#support)
 - [FAQ](#faq)
 - [Limitations](#limitations)
+- [Security Defaults](#security-defaults)
 - [Security](#security)
 - [Contributing](#contributing)
 - [License](#license)
@@ -136,31 +137,31 @@ npm install
 ```
 
 3. Create a Slack App:
-    - Go to https://api.slack.com/apps
-    - Click "Create New App" → "From scratch"
-    - Name your app (e.g., "PP Bot") and select your workspace
+   - Go to https://api.slack.com/apps
+   - Click "Create New App" → "From scratch"
+   - Name your app (e.g., "PP Bot") and select your workspace
 
 4. Configure your Slack App:
-    - **OAuth & Permissions**: Add these Bot Token Scopes:
-        - `app_mentions:read`
-        - `chat:write`
-        - `channels:history`
-        - `channels:read`
-        - `groups:history`
-        - `groups:read`
-        - `im:history`
-        - `mpim:history`
-        - `commands`
-    - **Socket Mode**: Enable Socket Mode and create an App-Level Token with `connections:write` scope
-    - **Slash Commands**: Create three commands:
-        - `/leaderboard` - Description: "Show the leaderboard"
-        - `/score` - Description: "Show your score"
-        - `/help` - Description: "Show help"
-    - **Event Subscriptions**: Enable events and subscribe to:
-        - `message.channels`
-        - `message.groups`
-        - `message.im`
-        - `message.mpim`
+   - **OAuth & Permissions**: Add these Bot Token Scopes:
+     - `app_mentions:read`
+     - `chat:write`
+     - `commands`
+     - `channels:history` _(only if using in public channels)_
+     - `groups:history` _(only if using in private channels)_
+     - `im:history` _(only if using in DMs)_
+     - `mpim:history` _(only if using in multi-party DMs)_
+   - Remove unused scopes to keep least privilege.
+   - Avoid adding `channels:read` / `groups:read` unless your deployment explicitly needs them.
+   - **Socket Mode**: Enable Socket Mode and create an App-Level Token with `connections:write` scope
+   - **Slash Commands**: Create three commands:
+     - `/leaderboard` - Description: "Show the leaderboard"
+     - `/score` - Description: "Show your score"
+     - `/help` - Description: "Show help"
+   - **Event Subscriptions**: Enable only the message events you need:
+     - `message.channels` _(public channels only)_
+     - `message.groups` _(private channels only)_
+     - `message.im` _(DMs only)_
+     - `message.mpim` _(group DMs only)_
 
 5. Install the app to your workspace (OAuth & Permissions page)
 
@@ -171,10 +172,10 @@ cp .env.example .env
 ```
 
 7. Edit `.env` and add your tokens:
-    - `SLACK_BOT_TOKEN`: Bot token (starts with `xoxb-`)
-    - `SLACK_APP_TOKEN`: App-level token (starts with `xapp-`)
-    - `SLACK_SIGNING_SECRET`: App signing secret
-    - (Optional) `DATABASE_URL`: e.g. `postgres://user:pass@localhost:5432/ppbot`
+   - `SLACK_BOT_TOKEN`: Bot token (starts with `xoxb-`)
+   - `SLACK_APP_TOKEN`: App-level token (starts with `xapp-`)
+   - `SLACK_SIGNING_SECRET`: App signing secret
+   - (Optional) `DATABASE_URL`: e.g. `postgres://user:pass@localhost:5432/ppbot`
 
 ## Configuration
 
@@ -190,6 +191,13 @@ Optional:
 - `LOG_LEVEL` - `error` | `warn` | `info` | `debug` (defaults to `info` in production, `debug` otherwise)
 - `NODE_ENV` - `development` | `production` | `test` (defaults to `development`)
 - `PORT` / `RAILWAY_PORT` - Port to bind the Slack Socket Mode listener (defaults to `3000`)
+- `DB_SSL_MODE` - `disable` | `require` | `verify-full` (defaults to `verify-full` in production)
+- `DB_SSL_CA_PEM_B64` - Base64-encoded CA bundle for PostgreSQL TLS validation
+- `ALLOW_INSECURE_DB_SSL` - must be `true` to allow insecure DB SSL modes in production
+- `ABUSE_ENFORCEMENT_MODE` - `monitor` | `enforce` (defaults to `enforce`)
+- `VOTE_MAX_TARGETS_PER_MESSAGE`, `VOTE_RATE_USER_PER_MIN`, `VOTE_RATE_CHANNEL_PER_MIN`,
+  `VOTE_PAIR_COOLDOWN_SECONDS`, `VOTE_DAILY_DOWNVOTE_LIMIT`, `VOTE_ALLOWED_CHANNEL_IDS`
+- `MAINTENANCE_ENABLED`, `MAINTENANCE_DEDUPE_RETENTION_DAYS`, `MAINTENANCE_VOTE_HISTORY_RETENTION_DAYS`
 
 Environment variables are validated on startup; missing or invalid values will fail fast with a clear error.
 For production deploys, set `NODE_ENV=production` (or keep `LOG_LEVEL=info`) to avoid noisy logs.
@@ -217,7 +225,7 @@ The current implementation uses PostgreSQL (or pg-mem in tests) with three table
 - `leaderboard(user_id PK, score, created_at, updated_at)`
 - `thing_leaderboard(thing_name PK, score, created_at, updated_at)`
 - `vote_history(id PK, voter_id, voted_user_id, vote_type, channel_id?, message_ts?, created_at)`
-- `message_dedupe(id PK, channel_id, message_ts, created_at)` for replay protection
+- `message_dedupe(id PK, dedupe_key UNIQUE, channel_id?, message_ts?, created_at)` for replay protection
 
 Migrations: `npm run migrate` will create the tables on a real database.
 The application also runs migrations on startup when `DATABASE_URL` is set.
@@ -265,6 +273,17 @@ Duplicate events are deduplicated to prevent double-counting. Repeated targets i
 
 - Socket Mode is required (no public HTTP endpoints).
 - Votes are deduplicated per message; repeated targets in the same message are ignored.
+
+## Security Defaults
+
+- Production defaults to verified PostgreSQL TLS (`DB_SSL_MODE=verify-full`).
+- Insecure DB SSL modes require explicit override (`ALLOW_INSECURE_DB_SSL=true`) in production.
+- Replay protection prioritizes Slack `event_id` and falls back to `channel:ts`.
+- Abuse controls are on by default (`ABUSE_ENFORCEMENT_MODE=enforce`) with rate limits and cooldowns.
+- Maintenance cleanup runs at startup and every 12 hours to limit table growth.
+- Slack tokens and PostgreSQL URL credentials are redacted in logs.
+
+See `docs/CONFIGURATION.md`, `docs/SECURITY-HARDENING.md`, and `docs/SECURITY-OPERATIONS.md` for details.
 
 ## Development Notes
 

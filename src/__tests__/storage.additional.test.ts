@@ -2,6 +2,7 @@ import {
   getRecentVotes,
   getUserScore,
   recordMessageIfNew,
+  recordVoteAndUpdateUserScore,
   recordVote,
   updateUserScore,
 } from '../storage/database';
@@ -53,5 +54,24 @@ describe('additional storage coverage', () => {
     const second = await recordMessageIfNew('C2', '999');
     expect(first).toBe(true);
     expect(second).toBe(false);
+  });
+
+  test('recordVoteAndUpdateUserScore applies both writes atomically for user votes', async () => {
+    const first = await recordVoteAndUpdateUserScore('U_VOTER_A', 'U_ATOMIC', '++', 1, {
+      channelId: 'C10',
+      messageTs: '100.1',
+    });
+    expect(first.recorded).toBe(true);
+    expect(first.score).toBe(1);
+
+    const duplicate = await recordVoteAndUpdateUserScore('U_VOTER_A', 'U_ATOMIC', '++', 1, {
+      channelId: 'C10',
+      messageTs: '100.1',
+    });
+    expect(duplicate.recorded).toBe(false);
+    expect(duplicate.score).toBeUndefined();
+
+    const score = await getUserScore('U_ATOMIC');
+    expect(score).toBe(1);
   });
 });

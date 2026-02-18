@@ -1,0 +1,15 @@
+title = "pp-bot gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Allow Slack test fixture env assignments in env security tests"
+targetRules = ["generic-api-key"]
+paths = ['''src/__tests__/env\.security\.test\.ts''']
+regexTarget = "line"
+regexes = [
+  '''process\.env\.SLACK_BOT_TOKEN\s*=.*''',
+  '''process\.env\.SLACK_APP_TOKEN\s*=.*''',
+  '''process\.env\.SLACK_SIGNING_SECRET\s*=.*''',
+]

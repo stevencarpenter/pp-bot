@@ -1,6 +1,6 @@
 # Railway.com Deployment Guide for pp-bot
 
-**Last Updated:** October 23, 2025  
+**Last Updated:** February 10, 2026  
 **Target Platform:** Railway.com  
 **Application:** pp-bot Slack Bot  
 **Tech Stack:** Node.js (TypeScript), PostgreSQL, Socket Mode
@@ -30,7 +30,7 @@
 - GitHub account with access to stevencarpenter/pp-bot repository
 - Railway.com account (sign up at https://railway.app)
 - Slack workspace with admin access
-- Slack App created and configured (see Issue #1)
+- Slack app created and configured
 
 ### Required Tokens/Credentials
 
@@ -125,13 +125,13 @@ In **OAuth & Permissions**, add these bot token scopes:
 
 - `app_mentions:read`
 - `chat:write`
-- `channels:history`
-- `channels:read`
-- `groups:history`
-- `groups:read`
-- `im:history`
-- `mpim:history`
 - `commands`
+- `channels:history` _(only if used in public channels)_
+- `groups:history` _(only if used in private channels)_
+- `im:history` _(only if used in DMs)_
+- `mpim:history` _(only if used in group DMs)_
+
+Avoid adding `channels:read` / `groups:read` unless your deployment specifically requires them.
 
 Install the app to your workspace and save the bot token as `SLACK_BOT_TOKEN`.
 
@@ -145,12 +145,12 @@ Create the following commands in **Slash Commands**:
 
 ### Step 5: Event Subscriptions
 
-Enable **Event Subscriptions** and subscribe to:
+Enable **Event Subscriptions** only for channel types you actively use:
 
-- `message.channels`
-- `message.groups`
-- `message.im`
-- `message.mpim`
+- `message.channels` _(public channels only)_
+- `message.groups` _(private channels only)_
+- `message.im` _(DMs only)_
+- `message.mpim` _(group DMs only)_
 
 ### Step 6: Signing Secret
 
@@ -202,6 +202,10 @@ CREATE TABLE IF NOT EXISTS vote_history
 CREATE INDEX IF NOT EXISTS idx_vote_history_user ON vote_history (voted_user_id);
 CREATE INDEX IF NOT EXISTS idx_vote_history_created ON vote_history (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_vote_history_channel_message ON vote_history (channel_id, message_ts);
+CREATE INDEX IF NOT EXISTS idx_vote_history_voter_created ON vote_history (voter_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_vote_history_channel_created ON vote_history (channel_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_vote_history_voter_target_created ON vote_history (voter_id, voted_user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_vote_history_downvote_voter_created ON vote_history (vote_type, voter_id, created_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_vote_history_dedupe
     ON vote_history (voter_id, voted_user_id, channel_id, message_ts)
     WHERE channel_id IS NOT NULL AND message_ts IS NOT NULL;
@@ -209,11 +213,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_vote_history_dedupe
 CREATE TABLE IF NOT EXISTS message_dedupe
 (
     id         SERIAL PRIMARY KEY,
-    channel_id VARCHAR(20) NOT NULL,
-    message_ts VARCHAR(20) NOT NULL,
+    channel_id VARCHAR(20),
+    message_ts VARCHAR(20),
+    dedupe_key VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     UNIQUE (channel_id, message_ts)
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_message_dedupe_key ON message_dedupe (dedupe_key);
+CREATE INDEX IF NOT EXISTS idx_message_dedupe_created ON message_dedupe (created_at DESC);
 ```
 
 Alternatively, you can rely on the built-in migration runner:
@@ -241,6 +248,21 @@ NODE_ENV=production
 LOG_LEVEL=info
 DATABASE_URL=postgres://user:pass@host:5432/dbname
 PORT=3000
+DB_SSL_MODE=verify-full
+ALLOW_INSECURE_DB_SSL=false
+
+# Abuse controls (recommended defaults)
+ABUSE_ENFORCEMENT_MODE=enforce
+VOTE_MAX_TARGETS_PER_MESSAGE=5
+VOTE_RATE_USER_PER_MIN=12
+VOTE_RATE_CHANNEL_PER_MIN=60
+VOTE_PAIR_COOLDOWN_SECONDS=300
+VOTE_DAILY_DOWNVOTE_LIMIT=15
+
+# Data retention
+MAINTENANCE_ENABLED=true
+MAINTENANCE_DEDUPE_RETENTION_DAYS=14
+MAINTENANCE_VOTE_HISTORY_RETENTION_DAYS=365
 ```
 
 Notes:
@@ -248,7 +270,8 @@ Notes:
 - Railway provides `RAILWAY_PORT`; the app uses `PORT` or `RAILWAY_PORT`.
 - The app runs migrations automatically on startup when `DATABASE_URL` is set.
 - When using the Railway template, you'll be prompted for the Slack tokens during provisioning.
-- Railway config uses a pre-deploy migration hook; startup also runs migrations as a safety net.
+- This repo currently relies on startup migrations; add a Railway pre-deploy migration step only if your team prefers explicit migration gating.
+- In production, prefer `DB_SSL_MODE=verify-full`.
 
 ---
 
@@ -341,9 +364,8 @@ railway run psql $DATABASE_URL -c "SELECT 1"
 
 ### Railway Free Tier
 
-- $5 credit per month
-- ~500 MB RAM
-- Keep pool sizing modest for small instances
+- Railway plans and limits change over time; check current pricing/limits in the Railway dashboard.
+- Keep pool sizing modest for small instances.
 
 ### Monitor Usage
 
@@ -377,7 +399,9 @@ railway rollback <deployment-id>
 - Never commit `.env` files
 - Rotate secrets every 90 days
 - Use Railway's variable management
-- Enable SSL for database
+- Use `DB_SSL_MODE=verify-full` for PostgreSQL
+- Keep `ALLOW_INSECURE_DB_SSL=false` in production unless explicitly troubleshooting
+- Enable GitHub secret scanning and push protection for this repository
 - Keep dependencies updated
 
 ---

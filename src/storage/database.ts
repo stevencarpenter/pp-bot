@@ -3,6 +3,7 @@ import { VoteAction, VoteRecord } from '../types';
 import logger from '../logger';
 import { waitForDatabase } from '../db';
 import { getPool } from './pool';
+import { buildLegacyMessageDedupeKey } from '../utils/dedupe';
 
 type DatabaseError = {
   code?: string;
@@ -207,17 +208,45 @@ interface RecordVoteOptions {
   messageTs?: string;
 }
 
-export async function recordMessageIfNew(channelId: string, messageTs: string): Promise<boolean> {
+interface RecordVoteAndScoreResult {
+  recorded: boolean;
+  score?: number;
+}
+
+interface MessageDedupeOptions {
+  channelId?: string;
+  messageTs?: string;
+}
+
+export async function recordMessageIfNewByKey(
+  dedupeKey: string,
+  options: MessageDedupeOptions = {}
+): Promise<boolean> {
+  const { channelId, messageTs } = options;
   return withDatabaseRetry(async () => {
     const pool = getPool();
     const { rows } = await pool.query(
-      `INSERT INTO message_dedupe (channel_id, message_ts)
-             VALUES ($1, $2)
+      `INSERT INTO message_dedupe (dedupe_key, channel_id, message_ts)
+             VALUES ($1, $2, $3)
              ON CONFLICT DO NOTHING
              RETURNING id`,
-      [channelId, messageTs]
+      [dedupeKey, channelId ?? null, messageTs ?? null]
     );
     return rows.length > 0;
+  });
+}
+
+export async function recordMessageIfNew(channelId: string, messageTs: string): Promise<boolean> {
+  return recordMessageIfNewByKey(buildLegacyMessageDedupeKey(channelId, messageTs), {
+    channelId,
+    messageTs,
+  });
+}
+
+export async function removeMessageDedupeByKey(dedupeKey: string): Promise<void> {
+  await withDatabaseRetry(async () => {
+    const pool = getPool();
+    await pool.query('DELETE FROM message_dedupe WHERE dedupe_key = $1', [dedupeKey]);
   });
 }
 
@@ -238,6 +267,46 @@ export async function recordVote(
       [voterId, votedUserId, voteType, channelId || null, messageTs || null]
     );
     return rows.length > 0;
+  });
+}
+
+export async function recordVoteAndUpdateUserScore(
+  voterId: string,
+  votedUserId: string,
+  voteType: VoteAction,
+  delta: number,
+  options: RecordVoteOptions = {}
+): Promise<RecordVoteAndScoreResult> {
+  const { channelId, messageTs } = options;
+  return withDatabaseRetry(async () => {
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `WITH recorded_vote AS (
+           INSERT INTO vote_history (voter_id, voted_user_id, vote_type, channel_id, message_ts)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT DO NOTHING
+           RETURNING id
+       ),
+       upserted_score AS (
+           INSERT INTO leaderboard (user_id, score, updated_at)
+           SELECT $2, $6::integer, LOCALTIMESTAMP
+           FROM recorded_vote
+           ON CONFLICT (user_id)
+               DO UPDATE SET score = leaderboard.score + $6::integer,
+                             updated_at = LOCALTIMESTAMP
+           RETURNING score
+       )
+       SELECT EXISTS(SELECT 1 FROM recorded_vote) AS recorded,
+              (SELECT score FROM upserted_score LIMIT 1) AS score`,
+      [voterId, votedUserId, voteType, channelId ?? null, messageTs ?? null, delta]
+    );
+    const result = rows[0] as { recorded: boolean; score: number | number[] | null } | undefined;
+    const rawScore = result?.score;
+    const normalizedScore = Array.isArray(rawScore) && rawScore.length > 0 ? rawScore[0] : rawScore;
+    return {
+      recorded: Boolean(result?.recorded),
+      score: typeof normalizedScore === 'number' ? normalizedScore : undefined,
+    };
   });
 }
 

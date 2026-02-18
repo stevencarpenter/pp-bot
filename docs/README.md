@@ -11,6 +11,9 @@ This directory contains detailed documentation for the pp-bot project.
 ### Deployment & Operations
 
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** – Comprehensive guide for deploying to Railway.com and other platforms
+- **[CONFIGURATION.md](CONFIGURATION.md)** - Complete environment variable reference
+- **[SECURITY-HARDENING.md](SECURITY-HARDENING.md)** - Production security baseline checklist
+- **[SECURITY-OPERATIONS.md](SECURITY-OPERATIONS.md)** - Secret rotation and incident response runbook
 
 ## Additional Documentation
 
