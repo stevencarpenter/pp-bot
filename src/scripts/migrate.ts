@@ -123,7 +123,6 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
       ALTER TABLE message_dedupe ALTER COLUMN message_ts DROP NOT NULL;
       ALTER TABLE message_dedupe ALTER COLUMN dedupe_key SET NOT NULL;
       ALTER TABLE message_dedupe DROP CONSTRAINT IF EXISTS message_dedupe_dedupe_key_key;
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_message_dedupe_key ON message_dedupe (dedupe_key);
   `;
 
   const dedupeSql =
