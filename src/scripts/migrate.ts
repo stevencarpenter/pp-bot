@@ -103,6 +103,11 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
           created_at TIMESTAMP DEFAULT NOW(),
           UNIQUE (channel_id, message_ts)
       );
+  `;
+
+  const messageDedupeIndexesSql =
+    // prettier-ignore
+    `
       CREATE UNIQUE INDEX IF NOT EXISTS idx_message_dedupe_key ON message_dedupe (dedupe_key);
       CREATE INDEX IF NOT EXISTS idx_message_dedupe_created ON message_dedupe (created_at DESC);
   `;
@@ -222,6 +227,7 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
     await activeClient.query('BEGIN');
     await activeClient.query(ddl);
     await upgradeMessageDedupeSchema();
+    await activeClient.query(messageDedupeIndexesSql);
     await dedupeVoteHistory();
     await activeClient.query(createDedupeIndexSql);
     await activeClient.query('COMMIT');
