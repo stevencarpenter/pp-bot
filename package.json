@@ -29,7 +29,7 @@
   "dependencies": {
     "@slack/bolt": "^4.6.0",
     "pg": "^8.18.0",
-    "validator": "^13.15.26",
+    "validator": "^13.15.35",
     "axios": "1.14.0"
   },
   "overrides": {
