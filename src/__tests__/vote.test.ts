@@ -57,6 +57,15 @@ describe('parseVote (TS)', () => {
     ]);
   });
 
+  it('parses stronger negative votes as extra deductions', () => {
+    expect(parseVote('<@U123> ---')).toEqual([
+      { targetId: 'U123', targetType: 'user', action: '--', scoreDelta: -2 },
+    ]);
+    expect(parseVote('@release ----')).toEqual([
+      { targetId: 'release', targetType: 'thing', action: '--', scoreDelta: -3 },
+    ]);
+  });
+
   it('ignores malformed thing votes', () => {
     expect(parseVote('@@invalid ++')).toEqual([]);
     expect(parseVote('email test foo@bar.com ++')).toEqual([]);

@@ -2,8 +2,8 @@ import { Vote, VoteAction } from '../types';
 import { sanitizeThingName, sanitizeUserId } from './sanitize';
 
 function parseVoteToken(token: string): { action: VoteAction; scoreDelta: number } | null {
-  if (token === '--') {
-    return { action: '--', scoreDelta: -1 };
+  if (/^-{2,}$/.test(token)) {
+    return { action: '--', scoreDelta: -(token.length - 1) };
   }
 
   if (/^\+{2,}$/.test(token)) {
@@ -14,9 +14,9 @@ function parseVoteToken(token: string): { action: VoteAction; scoreDelta: number
 }
 
 export function parseVote(text: string): Vote[] {
-  const USER_VOTE_REGEX = /<@([A-Za-z0-9]+)>\s*(\+{2,}|--)/g;
+  const USER_VOTE_REGEX = /<@([A-Za-z0-9]+)>\s*(\+{2,}|-{2,})/g;
   const THING_VOTE_REGEX =
-    /(^|[\s,.!?()[\]{}"'`])@([A-Za-z0-9][A-Za-z0-9 _\-.']{0,63})\s*(\+{2,}|--)/g;
+    /(^|[\s,.!?()[\]{}"'`])@([A-Za-z0-9][A-Za-z0-9 _\-.']{0,63}?)\s*(\+{2,}|-{2,})/g;
   const matches: { index: number; vote: Vote }[] = [];
   let match: RegExpExecArray | null;
 

@@ -41,6 +41,12 @@ describe('parseVote (comprehensive)', () => {
       { targetId: 'broncos', targetType: 'thing', action: '++', scoreDelta: 3 },
     ]);
   });
+  test('extra minus signs add extra deductions', () => {
+    expect(parseVote('<@U12345678> --- and @broncos ----')).toEqual([
+      { targetId: 'U12345678', targetType: 'user', action: '--', scoreDelta: -2 },
+      { targetId: 'broncos', targetType: 'thing', action: '--', scoreDelta: -3 },
+    ]);
+  });
   test('ignores text with mention but no vote', () => {
     expect(parseVote('Hello <@U12345678> how are you?')).toEqual([]);
   });

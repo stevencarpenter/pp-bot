@@ -82,6 +82,7 @@ To decrease someone's score:
 ```bash
 @bob --
 @alice -- not cool
+@dave ---- (3 points off)
 ```
 
 You can vote for multiple people in one message:
