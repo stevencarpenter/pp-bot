@@ -74,7 +74,7 @@ To increase someone's score:
 ```bash
 @john ++ for the great presentation!
 @jane ++ 🎉
-@pat ++++ four memes, three points
+@pat ++++ (3 points) excellent work
 ```
 
 To decrease someone's score:
