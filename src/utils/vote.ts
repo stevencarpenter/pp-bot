@@ -5,7 +5,7 @@ const DEFAULT_MAX_VOTE_SCORE_DELTA = 5;
 let cachedMaxVoteScoreDelta: number | undefined;
 
 function parseMaxVoteScoreDelta(): number {
-  const configuredValue = process.env.MAX_UPVOTE_SCORE_DELTA;
+  const configuredValue = process.env.MAX_VOTE_SCORE_DELTA;
   if (!configuredValue || configuredValue.trim() === '') {
     return DEFAULT_MAX_VOTE_SCORE_DELTA;
   }

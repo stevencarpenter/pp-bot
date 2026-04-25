@@ -1,19 +1,19 @@
 import { parseVote } from '../utils/vote';
 
 describe('parseVote (TS)', () => {
-  let originalMaxUpvoteScoreDelta: string | undefined;
+  let originalMaxVoteScoreDelta: string | undefined;
 
   beforeEach(() => {
-    originalMaxUpvoteScoreDelta = process.env.MAX_UPVOTE_SCORE_DELTA;
+    originalMaxVoteScoreDelta = process.env.MAX_VOTE_SCORE_DELTA;
   });
 
   afterEach(() => {
-    if (originalMaxUpvoteScoreDelta === undefined) {
-      delete process.env.MAX_UPVOTE_SCORE_DELTA;
+    if (originalMaxVoteScoreDelta === undefined) {
+      delete process.env.MAX_VOTE_SCORE_DELTA;
       return;
     }
 
-    process.env.MAX_UPVOTE_SCORE_DELTA = originalMaxUpvoteScoreDelta;
+    process.env.MAX_VOTE_SCORE_DELTA = originalMaxVoteScoreDelta;
   });
 
   it('parses ++', () => {
@@ -72,8 +72,16 @@ describe('parseVote (TS)', () => {
     ]);
   });
 
-  it('caps stronger votes at the configured max delta', () => {
-    process.env.MAX_UPVOTE_SCORE_DELTA = '5';
+  it('uses the default cap when MAX_VOTE_SCORE_DELTA is unset', () => {
+    delete process.env.MAX_VOTE_SCORE_DELTA;
+
+    expect(parseVote('<@U123> ++++++++')).toEqual([
+      { targetId: 'U123', targetType: 'user', action: '++', scoreDelta: 5 },
+    ]);
+  });
+
+  it('caps stronger votes below, at, and above the configured max delta', () => {
+    process.env.MAX_VOTE_SCORE_DELTA = '5';
 
     expect(parseVote('<@U123> +++++')).toEqual([
       { targetId: 'U123', targetType: 'user', action: '++', scoreDelta: 4 },
@@ -96,7 +104,7 @@ describe('parseVote (TS)', () => {
   });
 
   it('caps stronger downvotes at the configured max delta', () => {
-    process.env.MAX_UPVOTE_SCORE_DELTA = '5';
+    process.env.MAX_VOTE_SCORE_DELTA = '5';
 
     expect(parseVote('<@U123> --------')).toEqual([
       { targetId: 'U123', targetType: 'user', action: '--', scoreDelta: -5 },

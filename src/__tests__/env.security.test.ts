@@ -51,11 +51,11 @@ describe('environment security validation', () => {
     expect(() => validateEnv()).toThrow('Invalid MAINTENANCE_DEDUPE_RETENTION_DAYS');
   });
 
-  test('rejects invalid MAX_UPVOTE_SCORE_DELTA values', () => {
+  test('rejects invalid MAX_VOTE_SCORE_DELTA values', () => {
     setValidSlackEnv();
-    process.env.MAX_UPVOTE_SCORE_DELTA = '0';
+    process.env.MAX_VOTE_SCORE_DELTA = '0';
 
-    expect(() => validateEnv()).toThrow('Invalid MAX_UPVOTE_SCORE_DELTA');
+    expect(() => validateEnv()).toThrow('Invalid MAX_VOTE_SCORE_DELTA');
   });
 
   test('accepts valid secure configuration', () => {
