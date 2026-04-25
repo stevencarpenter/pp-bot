@@ -105,6 +105,7 @@ export function validateEnv(options: EnvValidationOptions = {}): ValidatedEnv {
 
   parseIntegerEnv(process.env, 'MAINTENANCE_DEDUPE_RETENTION_DAYS', 1, errors);
   parseIntegerEnv(process.env, 'MAINTENANCE_VOTE_HISTORY_RETENTION_DAYS', 1, errors);
+  parseIntegerEnv(process.env, 'MAX_VOTE_SCORE_DELTA', 1, errors);
 
   const hasDatabaseUrl =
     typeof process.env.DATABASE_URL === 'string' && process.env.DATABASE_URL.trim() !== '';

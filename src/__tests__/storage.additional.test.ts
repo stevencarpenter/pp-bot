@@ -74,4 +74,14 @@ describe('additional storage coverage', () => {
     const score = await getUserScore('U_ATOMIC');
     expect(score).toBe(1);
   });
+
+  test('recordVoteAndUpdateUserScore applies larger positive deltas', async () => {
+    const result = await recordVoteAndUpdateUserScore('U_VOTER_B', 'U_BONUS', '++', 3, {
+      channelId: 'C11',
+      messageTs: '100.2',
+    });
+
+    expect(result.recorded).toBe(true);
+    expect(result.score).toBe(3);
+  });
 });

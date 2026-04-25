@@ -16,7 +16,7 @@ function createConfig(overrides: Partial<AbuseControlsConfig> = {}): AbuseContro
     maxTargetsPerMessage: 5,
     userRatePerMinute: 3,
     channelRatePerMinute: 4,
-    pairCooldownSeconds: 300,
+    pairCooldownSeconds: 2,
     dailyDownvoteLimit: 2,
     allowedChannelIds: null,
     enforcementMode: 'enforce',
@@ -231,6 +231,41 @@ describe('abuse controls', () => {
     expect(nextDayDecision.allowed).toBe(true);
   });
 
+  test('allows repeat votes for the same target after two seconds', () => {
+    const controller = new AbuseController(createConfig({ pairCooldownSeconds: 2 }));
+    const baseTime = new Date('2026-01-01T00:00:00.000Z');
+
+    controller.registerAcceptedVote({
+      voterId: 'U1',
+      channelId: 'C1',
+      targetId: 'U2',
+      targetType: 'user',
+      action: '++',
+      now: baseTime,
+    });
+
+    const blocked = controller.evaluateVote({
+      voterId: 'U1',
+      channelId: 'C1',
+      targetId: 'U2',
+      targetType: 'user',
+      action: '++',
+      now: new Date('2026-01-01T00:00:01.000Z'),
+    });
+    const allowed = controller.evaluateVote({
+      voterId: 'U1',
+      channelId: 'C1',
+      targetId: 'U2',
+      targetType: 'user',
+      action: '++',
+      now: new Date('2026-01-01T00:00:02.000Z'),
+    });
+
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.reasonCode).toBe('PAIR_COOLDOWN_ACTIVE');
+    expect(allowed.allowed).toBe(true);
+  });
+
   test('monitor mode reports violations without blocking', () => {
     const controller = new AbuseController(
       createConfig({ enforcementMode: 'monitor', userRatePerMinute: 1 })
@@ -312,10 +347,13 @@ describe('abuse controls', () => {
     process.env.ABUSE_ENFORCEMENT_MODE = 'monitor';
     process.env.VOTE_ALLOWED_CHANNEL_IDS = 'C1,C2';
     process.env.VOTE_MAX_TARGETS_PER_MESSAGE = '7';
+    delete process.env.VOTE_PAIR_COOLDOWN_SECONDS;
+    delete process.env.VOTE_DOWNVOTE_PAIR_COOLDOWN_SECONDS;
 
     const config = getAbuseControlsConfig();
     expect(config.enforcementMode).toBe('monitor');
     expect(config.maxTargetsPerMessage).toBe(7);
+    expect(config.pairCooldownSeconds).toBe(2);
     expect(config.allowedChannelIds?.has('C1')).toBe(true);
 
     process.env.ABUSE_ENFORCEMENT_MODE = 'invalid';

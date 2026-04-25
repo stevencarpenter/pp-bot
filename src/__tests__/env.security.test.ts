@@ -51,6 +51,13 @@ describe('environment security validation', () => {
     expect(() => validateEnv()).toThrow('Invalid MAINTENANCE_DEDUPE_RETENTION_DAYS');
   });
 
+  test('rejects invalid MAX_VOTE_SCORE_DELTA values', () => {
+    setValidSlackEnv();
+    process.env.MAX_VOTE_SCORE_DELTA = '0';
+
+    expect(() => validateEnv()).toThrow('Invalid MAX_VOTE_SCORE_DELTA');
+  });
+
   test('accepts valid secure configuration', () => {
     setValidSlackEnv();
     process.env.DB_SSL_MODE = 'verify-full';
