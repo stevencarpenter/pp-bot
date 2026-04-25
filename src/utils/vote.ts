@@ -2,19 +2,32 @@ import { Vote, VoteAction } from '../types';
 import { sanitizeThingName, sanitizeUserId } from './sanitize';
 
 const DEFAULT_MAX_VOTE_SCORE_DELTA = 5;
+let cachedMaxVoteScoreDelta: number | undefined;
 
-function getMaxVoteScoreDelta(): number {
+function parseMaxVoteScoreDelta(): number {
   const configuredValue = process.env.MAX_UPVOTE_SCORE_DELTA;
   if (!configuredValue || configuredValue.trim() === '') {
     return DEFAULT_MAX_VOTE_SCORE_DELTA;
   }
 
   const parsedValue = Number.parseInt(configuredValue, 10);
-  if (!Number.isFinite(parsedValue) || Number.isNaN(parsedValue) || parsedValue < 1) {
+  if (Number.isNaN(parsedValue) || parsedValue < 1) {
     return DEFAULT_MAX_VOTE_SCORE_DELTA;
   }
 
   return parsedValue;
+}
+
+function getMaxVoteScoreDelta(): number {
+  if (process.env.NODE_ENV === 'test') {
+    return parseMaxVoteScoreDelta();
+  }
+
+  if (cachedMaxVoteScoreDelta === undefined) {
+    cachedMaxVoteScoreDelta = parseMaxVoteScoreDelta();
+  }
+
+  return cachedMaxVoteScoreDelta;
 }
 
 function parseVoteToken(token: string): { action: VoteAction; scoreDelta: number } | null {

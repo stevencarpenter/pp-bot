@@ -1,7 +1,11 @@
 import { parseVote } from '../utils/vote';
 
 describe('parseVote (TS)', () => {
-  const originalMaxUpvoteScoreDelta = process.env.MAX_UPVOTE_SCORE_DELTA;
+  let originalMaxUpvoteScoreDelta: string | undefined;
+
+  beforeEach(() => {
+    originalMaxUpvoteScoreDelta = process.env.MAX_UPVOTE_SCORE_DELTA;
+  });
 
   afterEach(() => {
     if (originalMaxUpvoteScoreDelta === undefined) {
