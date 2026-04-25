@@ -82,6 +82,7 @@ To decrease someone's score:
 ```bash
 @bob --
 @alice -- not cool
+@dave --- (deducts 2)
 @dave ---- (deducts 3)
 ```
 
