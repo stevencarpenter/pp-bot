@@ -199,7 +199,8 @@ Optional:
 - `ALLOW_INSECURE_DB_SSL` - must be `true` to allow insecure DB SSL modes in production
 - `ABUSE_ENFORCEMENT_MODE` - `monitor` | `enforce` (defaults to `enforce`)
 - `VOTE_MAX_TARGETS_PER_MESSAGE`, `VOTE_RATE_USER_PER_MIN`, `VOTE_RATE_CHANNEL_PER_MIN`,
-  `VOTE_PAIR_COOLDOWN_SECONDS`, `VOTE_DAILY_DOWNVOTE_LIMIT`, `VOTE_ALLOWED_CHANNEL_IDS`
+  `VOTE_PAIR_COOLDOWN_SECONDS`, `VOTE_DAILY_DOWNVOTE_LIMIT`, `VOTE_ALLOWED_CHANNEL_IDS`,
+  `MAX_UPVOTE_SCORE_DELTA` (defaults to `5` and caps multi-sign vote deltas)
 - `MAINTENANCE_ENABLED`, `MAINTENANCE_DEDUPE_RETENTION_DAYS`, `MAINTENANCE_VOTE_HISTORY_RETENTION_DAYS`
 
 Environment variables are validated on startup; missing or invalid values will fail fast with a clear error.

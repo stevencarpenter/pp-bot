@@ -1,6 +1,17 @@
 import { parseVote } from '../utils/vote';
 
 describe('parseVote (TS)', () => {
+  const originalMaxUpvoteScoreDelta = process.env.MAX_UPVOTE_SCORE_DELTA;
+
+  afterEach(() => {
+    if (originalMaxUpvoteScoreDelta === undefined) {
+      delete process.env.MAX_UPVOTE_SCORE_DELTA;
+      return;
+    }
+
+    process.env.MAX_UPVOTE_SCORE_DELTA = originalMaxUpvoteScoreDelta;
+  });
+
   it('parses ++', () => {
     expect(parseVote('<@U123> ++')).toEqual([
       { targetId: 'U123', targetType: 'user', action: '++', scoreDelta: 1 },
@@ -57,12 +68,34 @@ describe('parseVote (TS)', () => {
     ]);
   });
 
+  it('caps stronger votes at the configured max delta', () => {
+    process.env.MAX_UPVOTE_SCORE_DELTA = '5';
+
+    expect(parseVote('<@U123> +++++')).toEqual([
+      { targetId: 'U123', targetType: 'user', action: '++', scoreDelta: 4 },
+    ]);
+    expect(parseVote('<@U123> ++++++')).toEqual([
+      { targetId: 'U123', targetType: 'user', action: '++', scoreDelta: 5 },
+    ]);
+    expect(parseVote('<@U123> ++++++++')).toEqual([
+      { targetId: 'U123', targetType: 'user', action: '++', scoreDelta: 5 },
+    ]);
+  });
+
   it('parses stronger negative votes as extra deductions', () => {
     expect(parseVote('<@U123> ---')).toEqual([
       { targetId: 'U123', targetType: 'user', action: '--', scoreDelta: -2 },
     ]);
     expect(parseVote('@release ----')).toEqual([
       { targetId: 'release', targetType: 'thing', action: '--', scoreDelta: -3 },
+    ]);
+  });
+
+  it('caps stronger downvotes at the configured max delta', () => {
+    process.env.MAX_UPVOTE_SCORE_DELTA = '5';
+
+    expect(parseVote('<@U123> --------')).toEqual([
+      { targetId: 'U123', targetType: 'user', action: '--', scoreDelta: -5 },
     ]);
   });
 

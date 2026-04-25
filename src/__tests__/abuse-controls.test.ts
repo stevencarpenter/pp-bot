@@ -347,6 +347,8 @@ describe('abuse controls', () => {
     process.env.ABUSE_ENFORCEMENT_MODE = 'monitor';
     process.env.VOTE_ALLOWED_CHANNEL_IDS = 'C1,C2';
     process.env.VOTE_MAX_TARGETS_PER_MESSAGE = '7';
+    delete process.env.VOTE_PAIR_COOLDOWN_SECONDS;
+    delete process.env.VOTE_DOWNVOTE_PAIR_COOLDOWN_SECONDS;
 
     const config = getAbuseControlsConfig();
     expect(config.enforcementMode).toBe('monitor');

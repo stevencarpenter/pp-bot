@@ -37,6 +37,7 @@ environment at startup.
 - `VOTE_PAIR_COOLDOWN_SECONDS` - Cooldown before same voter can vote same target again (default: `2`)
 - `VOTE_DAILY_DOWNVOTE_LIMIT` - Max accepted downvotes per user per UTC day (default: `15`)
 - `VOTE_ALLOWED_CHANNEL_IDS` - Optional CSV allowlist of channel IDs (unset means all channels)
+- `MAX_UPVOTE_SCORE_DELTA` - Caps multi-sign vote deltas for `+++`/`---` style votes (default: `5`)
 
 ## Maintenance / Retention
 
