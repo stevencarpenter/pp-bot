@@ -6,33 +6,39 @@ import { updateLeaderboard } from '../utils/leaderboard';
 describe('parseVote (comprehensive)', () => {
   test('single ++ vote', () => {
     expect(parseVote('<@U12345678> ++')).toEqual([
-      { targetId: 'U12345678', targetType: 'user', action: '++' },
+      { targetId: 'U12345678', targetType: 'user', action: '++', scoreDelta: 1 },
     ]);
   });
   test('single -- vote', () => {
     expect(parseVote('<@U12345678> --')).toEqual([
-      { targetId: 'U12345678', targetType: 'user', action: '--' },
+      { targetId: 'U12345678', targetType: 'user', action: '--', scoreDelta: -1 },
     ]);
   });
   test('vote with trailing text', () => {
     expect(parseVote('<@U12345678> ++ for being awesome!')).toEqual([
-      { targetId: 'U12345678', targetType: 'user', action: '++' },
+      { targetId: 'U12345678', targetType: 'user', action: '++', scoreDelta: 1 },
     ]);
   });
   test('vote with emojis after', () => {
     expect(parseVote('<@U12345678> ++ 🎉 🎊 great job!')).toEqual([
-      { targetId: 'U12345678', targetType: 'user', action: '++' },
+      { targetId: 'U12345678', targetType: 'user', action: '++', scoreDelta: 1 },
     ]);
   });
   test('multiple votes in one line', () => {
     expect(parseVote('<@U12345678> ++ and <@U87654321> --')).toEqual([
-      { targetId: 'U12345678', targetType: 'user', action: '++' },
-      { targetId: 'U87654321', targetType: 'user', action: '--' },
+      { targetId: 'U12345678', targetType: 'user', action: '++', scoreDelta: 1 },
+      { targetId: 'U87654321', targetType: 'user', action: '--', scoreDelta: -1 },
     ]);
   });
   test('vote without space before ++', () => {
     expect(parseVote('<@U12345678>++')).toEqual([
-      { targetId: 'U12345678', targetType: 'user', action: '++' },
+      { targetId: 'U12345678', targetType: 'user', action: '++', scoreDelta: 1 },
+    ]);
+  });
+  test('extra plus signs add extra points', () => {
+    expect(parseVote('<@U12345678> +++ and @broncos ++++')).toEqual([
+      { targetId: 'U12345678', targetType: 'user', action: '++', scoreDelta: 2 },
+      { targetId: 'broncos', targetType: 'thing', action: '++', scoreDelta: 3 },
     ]);
   });
   test('ignores text with mention but no vote', () => {

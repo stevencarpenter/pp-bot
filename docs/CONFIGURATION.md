@@ -34,7 +34,7 @@ environment at startup.
 - `VOTE_MAX_TARGETS_PER_MESSAGE` - Max unique targets in one message (default: `5`)
 - `VOTE_RATE_USER_PER_MIN` - Max accepted votes per user per minute (default: `12`)
 - `VOTE_RATE_CHANNEL_PER_MIN` - Max accepted votes per channel per minute (default: `60`)
-- `VOTE_PAIR_COOLDOWN_SECONDS` - Cooldown before same voter can vote same target again (default: `300`)
+- `VOTE_PAIR_COOLDOWN_SECONDS` - Cooldown before same voter can vote same target again (default: `2`)
 - `VOTE_DAILY_DOWNVOTE_LIMIT` - Max accepted downvotes per user per UTC day (default: `15`)
 - `VOTE_ALLOWED_CHANNEL_IDS` - Optional CSV allowlist of channel IDs (unset means all channels)
 

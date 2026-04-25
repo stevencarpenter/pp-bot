@@ -1,7 +1,7 @@
 /** Slack user ID (e.g., "U12345678") */
 export type UserId = string;
 
-/** Vote action: increment (++) or decrement (--) */
+/** Vote action direction: upvote (++) or downvote (--) */
 export type VoteAction = '++' | '--';
 
 export type VoteTargetType = 'user' | 'thing';
@@ -11,6 +11,7 @@ export interface Vote {
   targetId: string;
   targetType: VoteTargetType;
   action: VoteAction;
+  scoreDelta: number;
 }
 
 export interface VoteRecord {

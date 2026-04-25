@@ -40,7 +40,7 @@ with that handle exists.
 
 - **Upvote/Downvote (Users)**: Mention a user with `@username ++` or `@username --` to change their score
 - **Celebrate Things**: Vote for non-user targets such as teams, releases, or ideas with `@thing ++` or `@thing --`
-- **Flexible Format**: Add any text or emojis after the `++` or `--` (e.g., `@user ++ great job! 🎉`)
+- **Flexible Format**: Add any text or emojis after the vote, and use extra `+` signs for bigger upvotes (e.g., `@user +++ great job! 🎉`)
 - **Leaderboard**: View the top scorers with the `/leaderboard` command
 - **Personal Score**: Check your own score with the `/score` command
 - **Self-Vote Prevention**: Users cannot vote for themselves
@@ -74,6 +74,7 @@ To increase someone's score:
 ```bash
 @john ++ for the great presentation!
 @jane ++ 🎉
+@pat ++++ four memes, three points
 ```
 
 To decrease someone's score:

@@ -1,30 +1,46 @@
 import { Vote, VoteAction } from '../types';
 import { sanitizeThingName, sanitizeUserId } from './sanitize';
 
+function parseVoteToken(token: string): { action: VoteAction; scoreDelta: number } | null {
+  if (token === '--') {
+    return { action: '--', scoreDelta: -1 };
+  }
+
+  if (/^\+{2,}$/.test(token)) {
+    return { action: '++', scoreDelta: token.length - 1 };
+  }
+
+  return null;
+}
+
 export function parseVote(text: string): Vote[] {
-  const USER_VOTE_REGEX = /<@([A-Za-z0-9]+)>\s*(\+\+|--)/g;
+  const USER_VOTE_REGEX = /<@([A-Za-z0-9]+)>\s*(\+{2,}|--)/g;
   const THING_VOTE_REGEX =
-    /(^|[\s,.!?()[\]{}"'`])@([A-Za-z0-9][A-Za-z0-9 _\-.']{0,63})\s*(\+\+|--)/g;
+    /(^|[\s,.!?()[\]{}"'`])@([A-Za-z0-9][A-Za-z0-9 _\-.']{0,63})\s*(\+{2,}|--)/g;
   const matches: { index: number; vote: Vote }[] = [];
   let match: RegExpExecArray | null;
 
   while ((match = USER_VOTE_REGEX.exec(text)) !== null) {
     const userId = sanitizeUserId(match[1]);
+    const parsedVote = parseVoteToken(match[2]);
     if (!userId) continue;
+    if (!parsedVote) continue;
     matches.push({
       index: match.index,
-      vote: { targetId: userId, targetType: 'user', action: match[2] as VoteAction },
+      vote: { targetId: userId, targetType: 'user', ...parsedVote },
     });
   }
 
   while ((match = THING_VOTE_REGEX.exec(text)) !== null) {
     const thingName = sanitizeThingName(match[2]);
+    const parsedVote = parseVoteToken(match[3]);
     if (!thingName) continue;
+    if (!parsedVote) continue;
     const leadingLength = match[1] ? match[1].length : 0;
     const index = match.index + leadingLength;
     matches.push({
       index,
-      vote: { targetId: thingName, targetType: 'thing', action: match[3] as VoteAction },
+      vote: { targetId: thingName, targetType: 'thing', ...parsedVote },
     });
   }
 

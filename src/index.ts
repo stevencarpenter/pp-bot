@@ -175,7 +175,7 @@ export function createApp() {
         }
         const reservation = voteDecision.reservation;
 
-        const delta = vote.action === '++' ? 1 : -1;
+        const delta = vote.scoreDelta;
         try {
           if (vote.targetType === 'user') {
             const voteResult = await recordVoteAndUpdateUserScore(

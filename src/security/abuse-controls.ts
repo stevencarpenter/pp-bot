@@ -107,7 +107,7 @@ export function getAbuseControlsConfig(env: NodeJS.ProcessEnv = process.env): Ab
     maxTargetsPerMessage: parseIntEnv(env, 'VOTE_MAX_TARGETS_PER_MESSAGE', 5, 1),
     userRatePerMinute: parseIntEnv(env, 'VOTE_RATE_USER_PER_MIN', 12, 1),
     channelRatePerMinute: parseIntEnv(env, 'VOTE_RATE_CHANNEL_PER_MIN', 60, 1),
-    pairCooldownSeconds: parseIntEnv(env, 'VOTE_PAIR_COOLDOWN_SECONDS', 300, 0),
+    pairCooldownSeconds: parseIntEnv(env, 'VOTE_PAIR_COOLDOWN_SECONDS', 2, 0),
     dailyDownvoteLimit: parseIntEnv(env, 'VOTE_DAILY_DOWNVOTE_LIMIT', 15, 0),
     allowedChannelIds: parseAllowedChannels(env),
     enforcementMode: parseEnforcementMode(env),
