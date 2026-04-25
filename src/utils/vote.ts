@@ -4,6 +4,11 @@ import { sanitizeThingName, sanitizeUserId } from './sanitize';
 const DEFAULT_MAX_VOTE_SCORE_DELTA = 5;
 let cachedMaxVoteScoreDelta: number | undefined;
 
+/**
+ * Runtime parsing is intentionally defensive and falls back to the default cap
+ * if the environment value is absent or invalid. Startup validation in env.ts
+ * is stricter and rejects invalid configuration before production use.
+ */
 function parseMaxVoteScoreDelta(): number {
   const configuredValue = process.env.MAX_VOTE_SCORE_DELTA;
   if (!configuredValue || configuredValue.trim() === '') {
@@ -18,6 +23,11 @@ function parseMaxVoteScoreDelta(): number {
   return parsedValue;
 }
 
+/**
+ * Production/runtime code can cache the parsed cap because environment values
+ * are expected to stay fixed after startup. Tests re-read on each call so they
+ * can vary process.env per case without reloading the module.
+ */
 function getMaxVoteScoreDelta(): number {
   if (process.env.NODE_ENV === 'test') {
     return parseMaxVoteScoreDelta();
