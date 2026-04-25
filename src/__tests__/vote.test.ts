@@ -66,6 +66,12 @@ describe('parseVote (TS)', () => {
     ]);
   });
 
+  it('correctly parses thing names that end with a dash', () => {
+    expect(parseVote('@my-thing- ---')).toEqual([
+      { targetId: 'my-thing-', targetType: 'thing', action: '--', scoreDelta: -2 },
+    ]);
+  });
+
   it('ignores malformed thing votes', () => {
     expect(parseVote('@@invalid ++')).toEqual([]);
     expect(parseVote('email test foo@bar.com ++')).toEqual([]);
