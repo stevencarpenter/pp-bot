@@ -10,8 +10,8 @@
 Response:
 
 ```
-<@john>'s score increased to 1
-<@jane>'s score increased to 1
+<@john>'s score increased by +1 to 1
+<@jane>'s score increased by +1 to 1
 ```
 
 ## Downvotes
@@ -24,8 +24,8 @@ Response:
 Response:
 
 ```
-<@bob>'s score decreased to -1
-<@alice>'s score decreased to -1
+<@bob>'s score decreased by -1 to -1
+<@alice>'s score decreased by -1 to -1
 ```
 
 ## Multiple votes in one message
@@ -37,8 +37,8 @@ Response:
 Response:
 
 ```
-<@john>'s score increased to 2
-<@jane>'s score increased to 2
+<@john>'s score increased by +1 to 2
+<@jane>'s score increased by +1 to 2
 ```
 
 ## Things leaderboard
@@ -51,8 +51,8 @@ Response:
 Response:
 
 ```
-Score for *broncos* increased to 1
-Score for *release* decreased to -1
+Score for *broncos* increased by +1 to 1
+Score for *release* decreased by -1 to -1
 ```
 
 ## Direct message
@@ -64,7 +64,7 @@ Score for *release* decreased to -1
 Response:
 
 ```
-<@alice>'s score increased to 3
+<@alice>'s score increased by +1 to 3
 ```
 
 ## Threaded reply

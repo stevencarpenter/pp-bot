@@ -205,13 +205,19 @@ export function createApp() {
             }
             hasPersistentWrite = true;
             const actionWord = vote.action === '++' ? 'increased' : 'decreased';
-            results.push(`<@${vote.targetId}>'s score ${actionWord} to ${voteResult.score}`);
+            const deltaDisplay = delta > 0 ? `+${delta}` : `${delta}`;
+            results.push(
+              `<@${vote.targetId}>'s score ${actionWord} by ${deltaDisplay} to ${voteResult.score}`
+            );
             continue;
           }
 
           const newScore = await updateThingScore(vote.targetId, delta);
           const actionWord = vote.action === '++' ? 'increased' : 'decreased';
-          results.push(`Score for *${vote.targetId}* ${actionWord} to ${newScore}`);
+          const deltaDisplay = delta > 0 ? `+${delta}` : `${delta}`;
+          results.push(
+            `Score for *${vote.targetId}* ${actionWord} by ${deltaDisplay} to ${newScore}`
+          );
           hasPersistentWrite = true;
         } catch (voteError) {
           if (reservation) {
