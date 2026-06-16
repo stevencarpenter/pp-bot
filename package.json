@@ -27,9 +27,9 @@
   "author": "Steven Carpenter",
   "license": "MIT",
   "dependencies": {
-    "@slack/bolt": "^4.7.1",
-    "axios": "^1.15.2",
-    "pg": "^8.18.0",
+    "@slack/bolt": "^4.7.2",
+    "axios": "^1.16.1",
+    "pg": "^8.21.0",
     "validator": "^13.15.35"
   },
   "overrides": {
