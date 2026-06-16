@@ -1,6 +1,0 @@
-allowBuilds:
-  unrs-resolver: set this to true or false
-minimumReleaseAgeExclude:
-  - js-yaml@4.1.2
-overrides:
-  js-yaml@<=4.1.1: ^4.1.2
