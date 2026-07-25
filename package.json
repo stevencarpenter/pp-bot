@@ -28,8 +28,8 @@
   "license": "MIT",
   "dependencies": {
     "@slack/bolt": "^4.7.3",
-    "axios": "^1.18.0",
-    "pg": "^8.21.0",
+    "axios": "^1.18.1",
+    "pg": "^8.22.0",
     "validator": "^13.15.35"
   },
   "overrides": {
