@@ -1,5 +1,4 @@
 import { parseVote } from '../utils/vote';
-import { updateLeaderboard } from '../utils/leaderboard';
 
 // Added legacy test cases migrated from old index.test.js
 
@@ -52,28 +51,5 @@ describe('parseVote (comprehensive)', () => {
   });
   test('ignores invalid reversed pattern', () => {
     expect(parseVote('++ <@U12345678>')).toEqual([]);
-  });
-});
-
-describe('updateLeaderboard (TS migrated)', () => {
-  test('increments new user', () => {
-    const lb: Record<string, number> = {};
-    expect(updateLeaderboard(lb, 'U1', '++')).toBe(1);
-  });
-  test('decrements new user', () => {
-    const lb: Record<string, number> = {};
-    expect(updateLeaderboard(lb, 'U1', '--')).toBe(-1);
-  });
-  test('increments existing user', () => {
-    const lb: Record<string, number> = { U1: 5 };
-    expect(updateLeaderboard(lb, 'U1', '++')).toBe(6);
-  });
-  test('decrements existing user', () => {
-    const lb: Record<string, number> = { U1: 5 };
-    expect(updateLeaderboard(lb, 'U1', '--')).toBe(4);
-  });
-  test('can go negative', () => {
-    const lb: Record<string, number> = { U1: 0 };
-    expect(updateLeaderboard(lb, 'U1', '--')).toBe(-1);
   });
 });

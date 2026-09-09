@@ -1,122 +1,42 @@
-# Examples
+# Voting Examples
 
-## Basic voting
+Select a Slack user mention for a person. A plain `@name` that is not a user mention votes for a thing.
+The responses below assume scores start at zero and abuse limits allow the votes.
 
-```
+## Users
+
+```text
 @john ++ for the great presentation!
-@jane ++ 🎉
+@jane ---
+@pat ++++ excellent work
+@john ++ and @jane ++ for the release!
 ```
 
-Response:
+`++` adds 1, `---` subtracts 2, and `++++` adds 3. The configured score cap is 5 by default.
+For a user with ID `U123`, a single upvote produces:
 
-```
-<@john>'s score increased by +1 to 1
-<@jane>'s score increased by +1 to 1
-```
-
-## Downvotes
-
-```
-@bob --
-@alice -- not cool
+```text
+<@U123>'s score increased by +1 to 1
 ```
 
-Response:
+The bot rejects self-votes, ignores repeated targets in one message, and applies
+[abuse limits](CONFIGURATION.md#abuse-controls). DMs require the matching Slack scopes and subscriptions
+in [Slack app setup](DEPLOYMENT.md#slack-app-setup).
 
-```
-<@bob>'s score decreased by -1 to -1
-<@alice>'s score decreased by -1 to -1
-```
+## Things
 
-## Multiple votes in one message
-
-```
-@john ++ and @jane ++ for the amazing work!
-```
-
-Response:
-
-```
-<@john>'s score increased by +1 to 2
-<@jane>'s score increased by +1 to 2
-```
-
-## Things leaderboard
-
-```
+```text
 @broncos ++ for the comeback win!
 @release -- needs more QA time
 ```
 
-Response:
-
-```
+```text
 Score for *broncos* increased by +1 to 1
 Score for *release* decreased by -1 to -1
 ```
 
-## Direct message
+## Commands
 
-```
-@alice ++ thanks for the help in DMs
-```
-
-Response:
-
-```
-<@alice>'s score increased by +1 to 3
-```
-
-## Threaded reply
-
-If you reply inside a thread, the bot responds in the same thread.
-
-## Slash commands
-
-```
-/leaderboard
-```
-
-Response:
-
-```
-🏆 Leaderboard 🏆
-
-Users
-🥇 <@alice>: 6
-🥈 <@bob>: 2
-🥉 <@john>: 2
-
-Things
-🥇 *broncos*: 4
-🥈 *release*: 1
-```
-
-```
-/score
-```
-
-Response:
-
-```
-<@alice>'s current score is 6
-```
-
-```
-/help
-```
-
-Response:
-
-```
-pp-bot help
-
-Voting
-@user ++ or @user -- to update a user score
-@thing ++ or @thing -- to update a thing score
-
-Commands
-/leaderboard - show top users and things
-/score - show your current score
-/help - show this help message
-```
+- `/leaderboard` shows the top 10 users and top 10 things, or prompts you to start voting when both are empty.
+- `/score` reports your score, for example `<@U123>'s current score is 1`.
+- `/help` displays voting syntax, commands, and examples.

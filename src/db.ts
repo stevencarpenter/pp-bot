@@ -1,11 +1,10 @@
 import { Pool } from 'pg';
 import type { QueryResult } from 'pg';
+import { EventEmitter } from 'node:events';
 import logger from './logger';
 import { assertSecureDbSslPolicy, getDatabaseSslConfig } from './security/db-ssl';
 
 type QueryParams = readonly unknown[] | undefined;
-type PoolEventHandler = (...args: unknown[]) => void;
-
 type PgMemClient = {
   connect(): Promise<void>;
   query(text: string, params?: QueryParams): Promise<QueryResult>;
@@ -18,23 +17,17 @@ type GlobalWithPools = typeof globalThis & { __ALL_POOLS__?: PoolLike[] };
 const g = globalThis as GlobalWithPools;
 
 function getAllPools(): PoolLike[] {
-  if (!g.__ALL_POOLS__) {
-    g.__ALL_POOLS__ = [];
-  }
-  return g.__ALL_POOLS__;
+  return (g.__ALL_POOLS__ ??= []);
 }
 
 if (!process.env.DATABASE_URL) {
   logger.warn('⚠️  DATABASE_URL not set. Database features will not work until it is provided.');
 }
 
-function createTestEphemeralPool() {
+function createTestEphemeralPool(): PoolLike {
   // Uses pg-mem with a persistent client to maintain state between queries
   let sharedClient: PgMemClient | null = null;
   let connected = false;
-
-  // Store event listeners for testing
-  const listeners: Record<string, PoolEventHandler[]> = {};
 
   async function getSharedClient(): Promise<PgMemClient> {
     if (sharedClient) {
@@ -47,8 +40,8 @@ function createTestEphemeralPool() {
     return sharedClient;
   }
 
-  const poolLike = {
-    async query(text: string, params?: QueryParams) {
+  const poolLike = Object.assign(new EventEmitter(), {
+    async query(text: string, params?: QueryParams): Promise<QueryResult> {
       const client = await getSharedClient();
       if (!connected) {
         await client.connect();
@@ -56,26 +49,15 @@ function createTestEphemeralPool() {
       }
       return await client.query(text, params);
     },
-    async end() {
+    async end(): Promise<void> {
       if (connected && sharedClient) {
         await sharedClient.end();
         connected = false;
         sharedClient = null;
       }
     },
-    on(event: string, handler: PoolEventHandler) {
-      if (!listeners[event]) {
-        listeners[event] = [];
-      }
-      listeners[event].push(handler);
-    },
-    emit(event: string, ...args: unknown[]) {
-      if (listeners[event]) {
-        listeners[event].forEach((handler) => handler(...args));
-      }
-    },
     _isEphemeral: true,
-  };
+  });
   return poolLike as unknown as PoolLike;
 }
 

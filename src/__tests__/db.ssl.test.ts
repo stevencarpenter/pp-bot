@@ -79,8 +79,8 @@ describe('database SSL policy', () => {
     expect(() => getDatabaseSslConfig()).toThrow('Invalid ALLOW_INSECURE_DB_SSL');
   });
 
-  test('decodes DB_SSL_CA_PEM_B64 for TLS configs', () => {
-    process.env.DB_SSL_MODE = 'verify-full';
+  test.each(['require', 'verify-full'])('decodes DB_SSL_CA_PEM_B64 in %s mode', (mode) => {
+    process.env.DB_SSL_MODE = mode;
     const pem = ['-----BEGIN CERTIFICATE-----', 'ZmFrZS1jYQ==', '-----END CERTIFICATE-----'].join(
       '\n'
     );
@@ -88,7 +88,7 @@ describe('database SSL policy', () => {
 
     const config = getDatabaseSslConfig();
     expect(config.ca).toBe(pem);
-    expect(config.ssl).toEqual({ rejectUnauthorized: true, ca: pem });
+    expect(config.ssl).toEqual({ rejectUnauthorized: mode === 'verify-full', ca: pem });
   });
 
   test('rejects malformed DB_SSL_CA_PEM_B64 values', () => {

@@ -1,6 +1,11 @@
 import { ensureSchema } from './helpers/schema';
 import { getPool } from '../storage/pool';
-import { getTopThings, getTopUsers, updateThingScore, updateUserScore } from '../storage/database';
+import {
+  getTopThings,
+  getTopUsers,
+  updateThingScore,
+  recordVoteAndUpdateUserScore,
+} from '../storage/database';
 
 describe('Thing leaderboard integration', () => {
   beforeAll(async () => {
@@ -39,7 +44,7 @@ describe('Thing leaderboard integration', () => {
   });
 
   it('should maintain separate user and thing leaderboards', async () => {
-    await updateUserScore('U123', 10);
+    await recordVoteAndUpdateUserScore('U_VOTER', 'U123', '++', 10);
     await updateThingScore('pizza', 10);
 
     const topUsers = await getTopUsers(10);

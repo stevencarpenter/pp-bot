@@ -18,29 +18,15 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
     return false;
   }
 
-  const connectionStringValue = connectionString;
-  const isPgMem = connectionStringValue.startsWith('pgmem://');
+  const isPgMem = connectionString.startsWith('pgmem://');
 
   if (!isPgMem) {
     assertSecureDbSslPolicy();
   }
 
-  let client: Client | Pool | undefined;
-  let shouldCloseClient = true;
+  let client: Client | Pool | undefined = poolOverride;
 
-  const getClientOrThrow = (): Client | Pool => {
-    if (!client) {
-      throw new Error('Database client was not initialized');
-    }
-    return client;
-  };
-
-  if (poolOverride) {
-    client = poolOverride;
-    shouldCloseClient = false;
-  }
-
-  const createClient = async () => {
+  const createClient = async (): Promise<Client> => {
     if (isPgMem) {
       const { newDb } = await import('pg-mem');
       const db = newDb();
@@ -49,7 +35,7 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
     }
 
     return new Client({
-      connectionString: connectionStringValue,
+      connectionString,
       ssl: getDatabaseSslConfig().ssl,
     });
   };
@@ -148,16 +134,7 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
           WHERE channel_id IS NOT NULL AND message_ts IS NOT NULL;
   `;
 
-  async function upgradeMessageDedupeSchema(): Promise<void> {
-    if (isPgMem) {
-      return;
-    }
-    const activeClient = getClientOrThrow();
-    await activeClient.query(upgradeMessageDedupeSql);
-  }
-
-  async function dedupeVoteHistory(): Promise<void> {
-    const activeClient = getClientOrThrow();
+  async function dedupeVoteHistory(activeClient: Client | Pool): Promise<void> {
     try {
       await activeClient.query(dedupeSql);
       return;
@@ -194,8 +171,7 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         client = await createClient();
-        const connectClient = getClientOrThrow();
-        await connectClient.connect();
+        await client.connect();
         break;
       } catch (error) {
         if (client?.end) {
@@ -222,26 +198,29 @@ async function migrate(poolOverride?: Pool, options?: MigrationOptions): Promise
   }
 
   try {
-    const activeClient = getClientOrThrow();
-    await activeClient.query('BEGIN');
-    await activeClient.query(ddl);
-    await upgradeMessageDedupeSchema();
-    await activeClient.query(messageDedupeIndexesSql);
-    await dedupeVoteHistory();
-    await activeClient.query(createDedupeIndexSql);
-    await activeClient.query('COMMIT');
+    if (!client) {
+      throw new Error('Database client was not initialized');
+    }
+    await client.query('BEGIN');
+    await client.query(ddl);
+    if (!isPgMem) {
+      await client.query(upgradeMessageDedupeSql);
+    }
+    await client.query(messageDedupeIndexesSql);
+    await dedupeVoteHistory(client);
+    await client.query(createDedupeIndexSql);
+    await client.query('COMMIT');
     logger.info('✅ Migration complete');
     return true;
   } catch (error) {
     if (client) {
-      const activeClient = getClientOrThrow();
-      await activeClient.query('ROLLBACK');
+      await client.query('ROLLBACK');
     }
     logger.error('Migration failed:', error);
     process.exitCode = 1;
     return false;
   } finally {
-    if (shouldCloseClient && client) {
+    if (!poolOverride && client) {
       await client.end();
     }
   }

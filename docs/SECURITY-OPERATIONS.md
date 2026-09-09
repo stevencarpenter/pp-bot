@@ -1,62 +1,48 @@
 # Security Operations Runbook
 
-Last reviewed: 2026-02-10
+## When to use this
 
-This runbook is for owner-operated hobby deployments of pp-bot.
+Use this runbook for a suspected credential leak, unusual voting or bot activity, recurring maintenance
+failures, or scheduled secret rotation in an owner-operated deployment.
 
-## 1) Secret Rotation Routine (Every 90 Days)
+## Diagnose
 
-1. Rotate `SLACK_BOT_TOKEN` in Slack app settings.
-2. Rotate `SLACK_APP_TOKEN` in Socket Mode token settings.
-3. Regenerate `SLACK_SIGNING_SECRET` if needed.
-4. Update Railway (or your platform) environment variables.
-5. Restart deployment and verify:
-   - bot connects
-   - `/help`, `/score`, and `/leaderboard` work
-6. Confirm old tokens are revoked.
+For a linked Railway service, run `railway logs`. Expect startup to show `Database migrations complete`
+and `Slack bot is running`. With maintenance enabled, expect `Maintenance cleanup complete` at startup
+and every 12 hours. Repeated connection or cleanup errors indicate an operational failure.
 
-## 2) Suspected Token Leak (Target: Complete in <15 Minutes)
+From your database console, run `SELECT 1;`. Expect one row containing `1`.
+Review recent Slack activity for vote spikes, repeated votes from one user or channel, abrupt score
+swings, or unexpected bot messages. If a credential is known to be exposed, revoke it immediately.
 
-1. Revoke leaked Slack token(s) immediately in Slack app settings.
-2. Generate replacement token(s).
-3. Update deployment secrets (`SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `SLACK_SIGNING_SECRET`).
-4. Redeploy/restart.
-5. Review recent bot activity and channel logs for abuse.
-6. Open a private GitHub security advisory with timeline and impact.
+## Secret Rotation
 
-## 3) Suspected Database Credential Leak
+Every 90 days:
 
-1. Rotate DB credentials and `DATABASE_URL`.
-2. If production, enforce `DB_SSL_MODE=verify-full`.
-3. Redeploy and run a sanity check query (`SELECT 1`).
-4. Review write spikes and anomalous score changes.
+1. Rotate `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN` in Slack app settings. Regenerate `SLACK_SIGNING_SECRET` if needed.
+2. Update deployment secrets and restart the bot.
+3. Verify startup logs and `/help`, `/score`, and `/leaderboard`. If they fail, correct the new credentials
+   and app permissions, then restart.
+4. Confirm old tokens are revoked.
 
-## 4) GitHub Controls (Repository Settings)
+## Suspected Slack Token Leak
 
-Enable these in GitHub repository settings:
+Target containment within 15 minutes:
 
-- Secret scanning
-- Push protection for secret scanning
-- Dependabot alerts
-- Code scanning alerts (CodeQL)
+1. Revoke exposed tokens in Slack app settings and generate replacements.
+2. Update the affected deployment secrets and restart. Verify startup and all three slash commands;
+   if verification fails, correct the replacement credentials and permissions.
+3. Review recent bot activity and channel logs for abuse.
+4. Open a private GitHub security advisory with the timeline and impact, following [SECURITY.md](../SECURITY.md).
 
-Workflow coverage in this repo:
+## Suspected Database Credential Leak
 
-- `.github/workflows/ci.yml` (build, tests, npm audit)
-- `.github/workflows/codeql.yml` (code scanning)
-- `.github/workflows/secret-scan.yml` (gitleaks)
+1. Rotate database credentials and update `DATABASE_URL`. Keep `DB_SSL_MODE=verify-full` in production.
+2. Restart, run `SELECT 1;` in the database console, and verify bot startup. If either fails, check
+   the replacement connection string, runtime network access, and CA configuration.
+3. Review write spikes and anomalous score changes.
 
-## 5) Detection Signals to Watch
+## After an Incident
 
-- Sudden spikes in vote volume
-- Rapid repeated votes from one user or one channel
-- Unexpected bot message behavior
-- Abrupt score swings for one person/target
-- Repeated maintenance cleanup failures
-
-## 6) Post-Incident Checklist
-
-- Rotate impacted secrets
-- Capture root cause and remediation
-- Update `docs/SECURITY-HARDENING.md` if baseline changed
-- Revisit `pp-bot-threat-model.md` with new evidence
+Record the cause, impact, remediation, and rotated secrets. Update the [security baseline](SECURITY-HARDENING.md)
+and [threat model](../pp-bot-threat-model.md) when evidence changes their assumptions.
