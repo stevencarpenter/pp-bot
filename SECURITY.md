@@ -14,5 +14,5 @@ We will acknowledge receipt within a reasonable timeframe and provide updates as
 
 ## Operational Security Notes
 
-- Security hardening baseline: `docs/SECURITY-HARDENING.md`
-- Secret rotation and incident response runbook: `docs/SECURITY-OPERATIONS.md`
+- [Production security baseline](docs/SECURITY-HARDENING.md)
+- [Secret rotation and incident response](docs/SECURITY-OPERATIONS.md)

@@ -1,15 +1,13 @@
-import { VoteAction, VoteRecord } from '../types';
+import { VoteAction } from '../types';
 
 import logger from '../logger';
 import { waitForDatabase } from '../db';
 import { getPool } from './pool';
-import { buildLegacyMessageDedupeKey } from '../utils/dedupe';
 
 type DatabaseError = {
   code?: string;
   message?: string;
   errno?: number;
-  errors?: unknown[];
 };
 
 const DATABASE_STARTUP_PG_CODE = '57P03';
@@ -43,13 +41,8 @@ function expandErrors(error: unknown): unknown[] {
   if (!error) return [];
   const expanded: unknown[] = Array.isArray(error) ? [...error] : [error];
 
-  if (error instanceof AggregateError && Array.isArray(error.errors)) {
+  if (typeof error === 'object' && 'errors' in error && Array.isArray(error.errors)) {
     expanded.push(...error.errors);
-  } else if (typeof error === 'object' && error && 'errors' in error) {
-    const nested = (error as DatabaseError).errors;
-    if (Array.isArray(nested)) {
-      expanded.push(...nested);
-    }
   }
 
   return expanded;
@@ -76,7 +69,7 @@ function isTransientErrorCandidate(error: unknown): boolean {
 }
 
 function isDatabaseStartupError(error: unknown): boolean {
-  return expandErrors(error).some((entry) => isTransientErrorCandidate(entry));
+  return expandErrors(error).some(isTransientErrorCandidate);
 }
 
 function formatErrorMessage(error: unknown): string {
@@ -136,22 +129,6 @@ export async function getUserScore(userId: string): Promise<number> {
   });
 }
 
-export async function updateUserScore(userId: string, delta: number): Promise<number> {
-  return withDatabaseRetry(async () => {
-    const pool = getPool();
-    const { rows } = await pool.query(
-      `INSERT INTO leaderboard (user_id, score, updated_at)
-             VALUES ($1, $2, NOW())
-             ON CONFLICT (user_id)
-                 DO UPDATE SET score = leaderboard.score + $2,
-                               updated_at = NOW()
-             RETURNING score`,
-      [userId, delta]
-    );
-    return rows[0].score as number;
-  });
-}
-
 export async function updateThingScore(thingName: string, delta: number): Promise<number> {
   return withDatabaseRetry(async () => {
     const pool = getPool();
@@ -164,17 +141,6 @@ export async function updateThingScore(thingName: string, delta: number): Promis
              RETURNING score`,
       [thingName, delta]
     );
-    return rows[0].score as number;
-  });
-}
-
-export async function getThingScore(thingName: string): Promise<number> {
-  return withDatabaseRetry(async () => {
-    const pool = getPool();
-    const { rows } = await pool.query('SELECT score FROM thing_leaderboard WHERE thing_name = $1', [
-      thingName,
-    ]);
-    if (rows.length === 0) return 0;
     return rows[0].score as number;
   });
 }
@@ -236,37 +202,10 @@ export async function recordMessageIfNewByKey(
   });
 }
 
-export async function recordMessageIfNew(channelId: string, messageTs: string): Promise<boolean> {
-  return recordMessageIfNewByKey(buildLegacyMessageDedupeKey(channelId, messageTs), {
-    channelId,
-    messageTs,
-  });
-}
-
 export async function removeMessageDedupeByKey(dedupeKey: string): Promise<void> {
   await withDatabaseRetry(async () => {
     const pool = getPool();
     await pool.query('DELETE FROM message_dedupe WHERE dedupe_key = $1', [dedupeKey]);
-  });
-}
-
-export async function recordVote(
-  voterId: string,
-  votedUserId: string,
-  voteType: VoteAction,
-  options: RecordVoteOptions = {}
-): Promise<boolean> {
-  const { channelId, messageTs } = options;
-  return withDatabaseRetry(async () => {
-    const pool = getPool();
-    const { rows } = await pool.query(
-      `INSERT INTO vote_history (voter_id, voted_user_id, vote_type, channel_id, message_ts)
-             VALUES ($1, $2, $3, $4, $5)
-             ON CONFLICT DO NOTHING
-             RETURNING id`,
-      [voterId, votedUserId, voteType, channelId || null, messageTs || null]
-    );
-    return rows.length > 0;
   });
 }
 
@@ -307,30 +246,5 @@ export async function recordVoteAndUpdateUserScore(
       recorded: Boolean(result?.recorded),
       score: typeof normalizedScore === 'number' ? normalizedScore : undefined,
     };
-  });
-}
-
-export async function getRecentVotes(userId: string, limit = 20): Promise<VoteRecord[]> {
-  return withDatabaseRetry(async () => {
-    const pool = getPool();
-    const { rows } = await pool.query(
-      `SELECT voter_id      as "voterId",
-                    voted_user_id as "votedUserId",
-                    vote_type     as "voteType",
-                    channel_id    as "channelId",
-                    message_ts    as "messageTs",
-                    created_at    as "createdAt"
-             FROM vote_history
-             WHERE voted_user_id = $1
-             ORDER BY created_at DESC
-             LIMIT $2`,
-      [userId, limit]
-    );
-    return rows.map((r) => ({
-      ...r,
-      channelId: r.channelId ?? undefined,
-      messageTs: r.messageTs ?? undefined,
-      createdAt: new Date(r.createdAt),
-    }));
   });
 }

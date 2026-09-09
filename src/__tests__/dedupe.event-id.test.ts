@@ -1,5 +1,5 @@
 import { pool } from '../db';
-import { recordMessageIfNew, recordMessageIfNewByKey } from '../storage/database';
+import { recordMessageIfNewByKey } from '../storage/database';
 import { resolveMessageDedupeKey } from '../utils/dedupe';
 import { ensureSchema } from './helpers/schema';
 
@@ -35,9 +35,16 @@ describe('event-id dedupe behavior', () => {
   test('falls back to channel:ts dedupe key', async () => {
     const dedupeKey = resolveMessageDedupeKey({ channelId: 'C2', messageTs: '999.000' });
     expect(dedupeKey).toBe('msg:C2:999.000');
+    if (dedupeKey === null) throw new Error('Expected channel:ts dedupe key');
 
-    const first = await recordMessageIfNew('C2', '999.000');
-    const second = await recordMessageIfNew('C2', '999.000');
+    const first = await recordMessageIfNewByKey(dedupeKey, {
+      channelId: 'C2',
+      messageTs: '999.000',
+    });
+    const second = await recordMessageIfNewByKey(dedupeKey, {
+      channelId: 'C2',
+      messageTs: '999.000',
+    });
 
     expect(first).toBe(true);
     expect(second).toBe(false);

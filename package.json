@@ -9,8 +9,6 @@
     "migrate": "ts-node src/scripts/migrate.ts",
     "test": "node --no-warnings ./node_modules/jest/bin/jest.js",
     "test:coverage": "node --no-warnings ./node_modules/jest/bin/jest.js --coverage",
-    "lint": "node -e \"console.log('Linting disabled by project configuration.');\"",
-    "lint:fix": "node -e \"console.log('Linting disabled by project configuration.');\"",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "db:up": "docker compose up -d postgres",
@@ -29,8 +27,7 @@
   "dependencies": {
     "@slack/bolt": "^5.1.0",
     "axios": "^1.20.0",
-    "pg": "^8.23.0",
-    "validator": "^13.15.35"
+    "pg": "^8.23.0"
   },
   "overrides": {
     "test-exclude": "^7.0.2",
@@ -40,7 +37,6 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^26.4.0",
     "@types/pg": "^8.23.1",
-    "@types/validator": "^13.15.10",
     "jest": "^30.5.0",
     "pg-mem": "^3.0.14",
     "prettier": "^3.9.6",

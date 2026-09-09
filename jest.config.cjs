@@ -8,7 +8,6 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json'],
   setupFiles: ['<rootDir>/jest.setup.cjs'],
   setupFilesAfterEnv: ['<rootDir>/jest.after-env.cjs'],
-  globalTeardown: '<rootDir>/jest.global-teardown.cjs',
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/index.ts', '!**/node_modules/**', '!dist/**'],
   coverageReporters: ['text', 'text-summary', 'lcov'],
