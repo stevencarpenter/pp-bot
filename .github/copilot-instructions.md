@@ -12,7 +12,6 @@ uses the Slack Bolt SDK, and stores data in PostgreSQL.
 - **Database:** PostgreSQL with pg-mem for testing
 - **Testing:** Jest
 - **Build:** TypeScript Compiler (tsc)
-- **Linting:** ESLint with TypeScript support
 - **Formatting:** Prettier
 - **Deployment:** Railway.com
 
@@ -38,7 +37,7 @@ uses the Slack Bolt SDK, and stores data in PostgreSQL.
 
 ### Import Organization
 
-- Follow the eslint import/order rule: alphabetical with newlines between groups
+- Order imports alphabetically with newlines between groups
 - Group imports: external packages, then internal modules
 - Use absolute paths from src/ directory when available
 
@@ -157,9 +156,8 @@ src/
 ### Before Making Changes
 
 1. Run tests: `npm test`
-2. Check linting: `npm run lint`
-3. Verify formatting: `npm run format`
-4. Build the project: `npm run build`
+2. Verify formatting: `npm run format`
+3. Build the project: `npm run build`
 
 ### Making Changes
 
@@ -167,14 +165,12 @@ src/
 2. Write tests first (TDD approach when feasible)
 3. Update documentation if adding features
 4. Ensure all tests pass before committing
-5. Run linter and fix any issues
+5. Run `npm run build` and fix any type errors
 
 ### Common Commands
 
 - `npm start` - Build and run the bot
 - `npm test` - Run all tests
-- `npm run lint` - Check for linting errors
-- `npm run lint:fix` - Auto-fix linting errors
 - `npm run format` - Check formatting
 - `npm run format:fix` - Auto-fix formatting
 - `npm run build` - Compile TypeScript

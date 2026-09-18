@@ -346,48 +346,15 @@ export class AbuseController {
     }
   }
 
-  registerAcceptedVote(context: AbuseVoteContext): void {
-    const now = context.now ?? new Date();
-    const nowMs = now.getTime();
-    this.maybePrune(now);
-
-    pushWindow(this.userWindow, context.voterId, nowMs, MINUTE_MS);
-
-    if (context.channelId) {
-      pushWindow(this.channelWindow, context.channelId, nowMs, MINUTE_MS);
-    }
-
-    if (this.config.pairCooldownSeconds > 0) {
-      const pairKey = `${context.voterId}:${context.targetType}:${context.targetId}`;
-      this.pairLastSeen.set(pairKey, nowMs);
-    }
-
-    if (context.action === '--') {
-      const dayKey = `${context.voterId}:${toDateKey(now)}`;
-      const current = this.dailyDownvotes.get(dayKey) ?? 0;
-      this.dailyDownvotes.set(dayKey, current + 1);
-    }
-  }
-
   private makeViolation(
     reasonCode: AbuseReasonCode,
     details: Record<string, unknown>
   ): AbuseDecision {
-    const reasonMessage = this.getReasonMessage(reasonCode);
-    if (this.config.enforcementMode === 'monitor') {
-      return {
-        allowed: true,
-        wouldBlock: true,
-        reasonCode,
-        reasonMessage,
-        details,
-      };
-    }
     return {
-      allowed: false,
+      allowed: this.config.enforcementMode === 'monitor',
       wouldBlock: true,
       reasonCode,
-      reasonMessage,
+      reasonMessage: this.getReasonMessage(reasonCode),
       details,
     };
   }
