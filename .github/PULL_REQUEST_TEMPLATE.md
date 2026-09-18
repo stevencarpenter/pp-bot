@@ -5,7 +5,6 @@ Describe the change and why it is necessary.
 ## Testing
 
 - [ ] `npm test`
-- [ ] `npm run lint`
 - [ ] `npm run build`
 
 ## Checklist

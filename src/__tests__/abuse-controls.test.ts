@@ -72,7 +72,7 @@ describe('abuse controls', () => {
     );
     const baseTime = new Date('2026-01-01T00:00:00.000Z');
 
-    controller.registerAcceptedVote({
+    controller.reserveVote({
       voterId: 'U1',
       channelId: 'C1',
       targetId: 'U2',
@@ -80,7 +80,7 @@ describe('abuse controls', () => {
       action: '++',
       now: baseTime,
     });
-    controller.registerAcceptedVote({
+    controller.reserveVote({
       voterId: 'U1',
       channelId: 'C1',
       targetId: 'U3',
@@ -103,7 +103,7 @@ describe('abuse controls', () => {
     const channelController = new AbuseController(
       createConfig({ userRatePerMinute: 99, channelRatePerMinute: 1 })
     );
-    channelController.registerAcceptedVote({
+    channelController.reserveVote({
       voterId: 'U1',
       channelId: 'C1',
       targetId: 'U2',
@@ -189,7 +189,7 @@ describe('abuse controls', () => {
     );
     const baseTime = new Date('2026-01-01T00:00:00.000Z');
 
-    controller.registerAcceptedVote({
+    controller.reserveVote({
       voterId: 'U1',
       channelId: 'C1',
       targetId: 'U2',
@@ -235,7 +235,7 @@ describe('abuse controls', () => {
     const controller = new AbuseController(createConfig({ pairCooldownSeconds: 2 }));
     const baseTime = new Date('2026-01-01T00:00:00.000Z');
 
-    controller.registerAcceptedVote({
+    controller.reserveVote({
       voterId: 'U1',
       channelId: 'C1',
       targetId: 'U2',
@@ -271,7 +271,7 @@ describe('abuse controls', () => {
       createConfig({ enforcementMode: 'monitor', userRatePerMinute: 1 })
     );
 
-    controller.registerAcceptedVote({
+    controller.reserveVote({
       voterId: 'U1',
       channelId: 'C1',
       targetId: 'U2',
@@ -305,7 +305,7 @@ describe('abuse controls', () => {
     );
 
     const stale = new Date('2026-01-01T00:00:00.000Z');
-    controller.registerAcceptedVote({
+    controller.reserveVote({
       voterId: 'U1',
       channelId: 'C1',
       targetId: 'U2',
@@ -313,7 +313,7 @@ describe('abuse controls', () => {
       action: '--',
       now: stale,
     });
-    controller.registerAcceptedVote({
+    controller.reserveVote({
       voterId: 'U1',
       channelId: 'C1',
       targetId: 'U3',
