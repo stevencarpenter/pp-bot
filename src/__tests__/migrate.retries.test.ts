@@ -70,8 +70,15 @@ describe('migration connection retries', () => {
     expect(instances[0].end).toHaveBeenCalledTimes(1);
     expect(instances[1].end).toHaveBeenCalledTimes(1);
     expect(instances[2].end).toHaveBeenCalledTimes(1);
-    expect(instances[2].query).toHaveBeenCalledWith('BEGIN');
-    expect(instances[2].query).toHaveBeenCalledWith('COMMIT');
+    expect(instances[2].query.mock.calls).toEqual([
+      ['BEGIN'],
+      [expect.stringContaining('CREATE TABLE IF NOT EXISTS leaderboard')],
+      [expect.stringContaining('ALTER TABLE message_dedupe ADD COLUMN IF NOT EXISTS dedupe_key')],
+      [expect.stringContaining('CREATE UNIQUE INDEX IF NOT EXISTS idx_message_dedupe_key')],
+      [expect.stringContaining('DELETE FROM vote_history')],
+      [expect.stringContaining('CREATE UNIQUE INDEX IF NOT EXISTS idx_vote_history_dedupe')],
+      ['COMMIT'],
+    ]);
   });
 
   test('respects custom retry config and exits without running DDL', async () => {
@@ -129,6 +136,7 @@ describe('migration connection retries', () => {
 
     const mockPool = {
       query: jest.fn().mockResolvedValue({}),
+      end: jest.fn(),
     };
     const Client = jest.fn();
 
@@ -143,6 +151,7 @@ describe('migration connection retries', () => {
 
     expect(result).toBe(true);
     expect(Client).not.toHaveBeenCalled();
+    expect(mockPool.end).not.toHaveBeenCalled();
     expect(mockPool.query).toHaveBeenCalledWith('BEGIN');
     expect(mockPool.query).toHaveBeenCalledWith('COMMIT');
   });

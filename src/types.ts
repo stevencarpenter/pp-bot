@@ -1,6 +1,3 @@
-/** Slack user ID (e.g., "U12345678") */
-export type UserId = string;
-
 /** Vote action direction: upvote (++) or downvote (--) */
 export type VoteAction = '++' | '--';
 
@@ -13,14 +10,3 @@ export interface Vote {
   action: VoteAction;
   scoreDelta: number;
 }
-
-export interface VoteRecord {
-  voterId: UserId;
-  votedUserId: UserId;
-  voteType: VoteAction;
-  channelId?: string;
-  messageTs?: string;
-  createdAt?: Date;
-}
-
-export { updateLeaderboard } from './utils/leaderboard';

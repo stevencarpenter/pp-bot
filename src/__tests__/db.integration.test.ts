@@ -29,29 +29,30 @@ describe('database integration', () => {
     await pool.query('SELECT 1');
   });
 
-  test('updateUserScore inserts then increments', async () => {
-    const first = await storage.updateUserScore('U_DB_USER', 1);
-    expect(first).toBe(1);
-    const second = await storage.updateUserScore('U_DB_USER', 2);
-    expect(second).toBe(3);
+  test('user votes insert then increment scores', async () => {
+    const first = await storage.recordVoteAndUpdateUserScore('U_VOTER', 'U_DB_USER', '++', 1);
+    expect(first).toEqual({ recorded: true, score: 1 });
+    const second = await storage.recordVoteAndUpdateUserScore('U_VOTER', 'U_DB_USER', '++', 2);
+    expect(second).toEqual({ recorded: true, score: 3 });
     const fetched = await storage.getUserScore('U_DB_USER');
     expect(fetched).toBe(3);
   });
 
-  test('recordVote stores vote history', async () => {
-    const recorded = await storage.recordVote('U_VOTER', 'U_DB_USER', '++', {
+  test('user votes store vote history', async () => {
+    const result = await storage.recordVoteAndUpdateUserScore('U_VOTER', 'U_DB_USER', '++', 1, {
       channelId: 'C123',
       messageTs: '123.456',
     });
-    expect(recorded).toBe(true);
-    const { rows } = await pool.query('SELECT * FROM vote_history WHERE voted_user_id = $1', [
-      'U_DB_USER',
-    ]);
-    expect(rows.length).toBeGreaterThan(0);
+    expect(result.recorded).toBe(true);
+    const { rows } = await pool.query(
+      'SELECT voter_id, voted_user_id, vote_type FROM vote_history WHERE channel_id = $1 AND message_ts = $2',
+      ['C123', '123.456']
+    );
+    expect(rows).toEqual([{ voter_id: 'U_VOTER', voted_user_id: 'U_DB_USER', vote_type: '++' }]);
   });
 
   test('getTopUsers returns ordered users', async () => {
-    await storage.updateUserScore('U_DB_USER2', 5);
+    await storage.recordVoteAndUpdateUserScore('U_VOTER', 'U_DB_USER2', '++', 5);
     const top = await storage.getTopUsers(5);
     expect(top[0].score).toBeGreaterThanOrEqual(top[top.length - 1].score);
   });

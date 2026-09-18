@@ -18,15 +18,6 @@ import { createAbuseController } from './security/abuse-controls';
 import { resolveMessageDedupeKey } from './utils/dedupe';
 import { getMaintenanceConfig, runMaintenance, scheduleMaintenance } from './storage/maintenance';
 
-type SlackMessageEnvelope = {
-  subtype?: unknown;
-  bot_id?: unknown;
-  text?: unknown;
-  user?: unknown;
-  channel?: unknown;
-  ts?: unknown;
-};
-
 function asRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object') {
     return {};
@@ -34,35 +25,20 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function asSlackMessageEnvelope(message: unknown): SlackMessageEnvelope {
-  return asRecord(message) as SlackMessageEnvelope;
-}
-
-function getLogLevel(): LogLevel {
-  const { logLevel } = validateEnv({ requireSlack: false });
-  switch (logLevel) {
-    case 'error':
-      return LogLevel.ERROR;
-    case 'warn':
-      return LogLevel.WARN;
-    case 'info':
-      return LogLevel.INFO;
-    case 'debug':
-      return LogLevel.DEBUG;
-    default:
-      return LogLevel.INFO;
-  }
-}
-
-export function createApp() {
-  validateEnv({ requireSlack: true });
+export function createApp(): App {
+  const { logLevel } = validateEnv({ requireSlack: true });
   const abuseController = createAbuseController();
   const app = new App({
     token: process.env.SLACK_BOT_TOKEN,
     signingSecret: process.env.SLACK_SIGNING_SECRET,
     socketMode: true,
     appToken: process.env.SLACK_APP_TOKEN,
-    logLevel: getLogLevel(),
+    logLevel: {
+      error: LogLevel.ERROR,
+      warn: LogLevel.WARN,
+      info: LogLevel.INFO,
+      debug: LogLevel.DEBUG,
+    }[logLevel],
   });
 
   // Message handler
@@ -75,7 +51,7 @@ export function createApp() {
     let eventId: string | undefined;
 
     try {
-      const envelope = asSlackMessageEnvelope(message);
+      const envelope = asRecord(message);
       if (envelope.subtype === 'bot_message' || envelope.bot_id) return;
       if (typeof envelope.text !== 'string' || typeof envelope.user !== 'string') return;
       const text = envelope.text;
@@ -226,16 +202,9 @@ export function createApp() {
           throw voteError;
         }
       }
-      if (results.length && blockedWarning) {
-        await say(`${results.join('\n')}\n${blockedWarning}`);
-        return;
-      }
+      if (blockedWarning) results.push(blockedWarning);
       if (results.length) {
         await say(results.join('\n'));
-        return;
-      }
-      if (blockedWarning) {
-        await say(blockedWarning);
       }
     } catch (err) {
       if (dedupeKey && !hasPersistentWrite) {

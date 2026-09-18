@@ -1,430 +1,126 @@
-# Railway.com Deployment Guide for pp-bot
+# Deploy pp-bot
 
-**Last Updated:** February 10, 2026  
-**Target Platform:** Railway.com  
-**Application:** pp-bot Slack Bot  
-**Tech Stack:** Node.js (TypeScript), PostgreSQL, Socket Mode
-
----
-
-## Table of Contents
-
-1. [Prerequisites](#prerequisites)
-2. [Railway.com Setup](#railwaycom-setup)
-3. [PostgreSQL Database Setup](#postgresql-database-setup)
-4. [Environment Variables](#environment-variables)
-5. [Deployment](#deployment)
-6. [Post-Deployment Verification](#post-deployment-verification)
-7. [Slack App Setup](#slack-app-setup)
-8. [Monitoring & Logging](#monitoring--logging)
-9. [Troubleshooting](#troubleshooting)
-10. [Cost Optimization](#cost-optimization)
-11. [Rollback Procedures](#rollback-procedures)
-
----
+Run one bot process per Slack workspace to keep the process-local abuse limits consistent.
+The bot uses Socket Mode and does not need a public HTTP endpoint.
 
 ## Prerequisites
 
-### Required Accounts
-
-- GitHub account with access to stevencarpenter/pp-bot repository
-- Railway.com account (sign up at https://railway.app)
-- Slack workspace with admin access
-- Slack app created and configured
-
-### Required Tokens/Credentials
-
-- `SLACK_BOT_TOKEN` (starts with `xoxb-`)
-- `SLACK_APP_TOKEN` (starts with `xapp-`)
-- `SLACK_SIGNING_SECRET` (32-character hex string)
-- Railway.com API token (for CLI deployment)
-
-### Local Setup
-
-```bash
-# Clone repository
-git clone https://github.com/stevencarpenter/pp-bot.git
-cd pp-bot
-
-# Install dependencies
-npm install
-
-# Install Railway CLI (optional, for manual deployments)
-npm install -g @railway/cli
-
-# Login to Railway
-railway login
-```
-
----
-
-## Railway.com Setup
-
-### Step 1: Create New Project
-
-1. **Navigate to Railway Dashboard**
-   - Go to https://railway.app
-   - Click "New Project"
-
-2. **Connect GitHub Repository**
-   - Select "Deploy from GitHub repo"
-   - Authorize Railway to access your GitHub
-   - Select `stevencarpenter/pp-bot` repository
-
-3. **Configure Initial Settings**
-   - Project name: `<your-project-name>`
-   - Environment: `production`
-   - Branch: `main`
-
-### Step 2: Configure Build Settings
-
-Railway will auto-detect Node.js. Verify settings:
-
-**Build Command:**
-
-```bash
-npm ci && npm run build
-```
-
-**Start Command:**
-
-```bash
-npm start
-```
-
-**Node Version:**
-
-```
-20.x
-```
-
-### Step 3: Environment configuration
-
-Set required environment variables in Railway (see [Environment Variables](#environment-variables)).
-
----
+Use a Slack workspace where you can install apps, a PostgreSQL database, and a checkout of
+[pp-bot](https://github.com/stevencarpenter/pp-bot). For Railway, you also need a
+[Railway account](https://railway.app) with access to the repository.
+For local operation, follow the [quick start](../README.md#quick-start).
 
 ## Slack App Setup
 
-### Step 1: Create a Slack App
+1. Create an app at [Slack Apps](https://api.slack.com/apps) for your workspace.
+2. Enable Socket Mode. Create an app-level token with `connections:write` and save it as `SLACK_APP_TOKEN`.
+3. Add bot scopes `chat:write` and `commands`. Enable only the message events and matching history
+   scopes needed for your deployment:
 
-1. Go to https://api.slack.com/apps
-2. Click **Create New App** → **From scratch**
-3. Name your app and select your workspace
+   | Conversation         | Event              | Bot scope          |
+   | -------------------- | ------------------ | ------------------ |
+   | Public channel       | `message.channels` | `channels:history` |
+   | Private channel      | `message.groups`   | `groups:history`   |
+   | Direct message       | `message.im`       | `im:history`       |
+   | Group direct message | `message.mpim`     | `mpim:history`     |
 
-### Step 2: Enable Socket Mode
+4. Create `/leaderboard`, `/score`, and `/help` slash commands.
+5. Install the app and save its bot token as `SLACK_BOT_TOKEN`. Copy the signing secret from
+   Basic Information to `SLACK_SIGNING_SECRET`.
+6. Invite the bot to the channels where people will vote.
 
-1. Open **Socket Mode**
-2. Toggle **Enable Socket Mode**
-3. Create an **App-Level Token** with `connections:write`
-4. Save the token as `SLACK_APP_TOKEN`
+Verify the installed app has the selected scopes and event subscriptions before deploying.
+If they differ, correct the configuration and reinstall the app. This bot handles `message.*` events;
+`app_mentions:read`, `channels:read`, and `groups:read` are not needed for these handlers.
+See Slack's [Socket Mode scope](https://docs.slack.dev/reference/scopes/connections.write/) and
+[message event reference](https://docs.slack.dev/reference/events/message.channels).
 
-### Step 3: OAuth Scopes
+## Railway Setup
 
-In **OAuth & Permissions**, add these bot token scopes:
+1. Create a project in the Railway dashboard and connect the bot service to the GitHub repository
+   and intended deployment branch. Verify the service source before continuing; correct it if it
+   points to another repository or branch.
+2. Add a PostgreSQL service. Set the bot service's `DATABASE_URL` to the database connection string
+   reachable from the runtime. Verify the reference targets this database and environment.
+3. Set the three Slack credentials, `NODE_ENV=production`, `DB_SSL_MODE=verify-full`, and
+   `ALLOW_INSECURE_DB_SSL=false`. If your database uses a private CA, supply `DB_SSL_CA_PEM_B64`.
+   Review the [configuration reference](CONFIGURATION.md) and [security baseline](SECURITY-HARDENING.md).
+   Do not copy the development `DB_SSL_MODE=disable` from `.env.example` into production.
+4. Use `npm run build` as the build command and `node dist/index.js` as the start command after
+   dependency installation. Check the build logs for a successful TypeScript build; fix build errors
+   before testing the Slack connection.
+5. Deploy and complete [verification](#verification). If the service fails, inspect
+   [diagnostics](#diagnostics) before retrying.
 
-- `app_mentions:read`
-- `chat:write`
-- `commands`
-- `channels:history` _(only if used in public channels)_
-- `groups:history` _(only if used in private channels)_
-- `im:history` _(only if used in DMs)_
-- `mpim:history` _(only if used in group DMs)_
+Railway deploys pushes to the configured branch when GitHub autodeploys are enabled.
+See [GitHub autodeploys](https://docs.railway.com/deployments/github-autodeploys) and
+[build/start commands](https://docs.railway.com/builds/build-and-start-commands).
+The [Railway template](https://railway.com/deploy/pp-bot) is another entry point for provisioning.
 
-Avoid adding `channels:read` / `groups:read` unless your deployment specifically requires them.
+For an existing service, the [Railway CLI](https://docs.railway.com/cli) supports:
 
-Install the app to your workspace and save the bot token as `SLACK_BOT_TOKEN`.
-
-### Step 4: Slash Commands
-
-Create the following commands in **Slash Commands**:
-
-- `/leaderboard` - Show the leaderboard
-- `/score` - Show your score
-- `/help` - Show help
-
-### Step 5: Event Subscriptions
-
-Enable **Event Subscriptions** only for channel types you actively use:
-
-- `message.channels` _(public channels only)_
-- `message.groups` _(private channels only)_
-- `message.im` _(DMs only)_
-- `message.mpim` _(group DMs only)_
-
-### Step 6: Signing Secret
-
-Copy the **Signing Secret** from **Basic Information** and set it as `SLACK_SIGNING_SECRET`.
-
----
-
-## PostgreSQL Database Setup
-
-### Step 1: Add PostgreSQL Service
-
-1. In Railway Dashboard, open your project
-2. Click "+ New" → "Database" → "PostgreSQL"
-3. Railway provisions database instantly
-4. Copy the `DATABASE_URL` from Variables tab
-
-### Step 2: Create Database Schema
-
-```sql
-CREATE TABLE IF NOT EXISTS leaderboard
-(
-    user_id    VARCHAR(20) PRIMARY KEY,
-    score      INTEGER   DEFAULT 0 NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_leaderboard_user ON leaderboard (user_id);
-CREATE INDEX IF NOT EXISTS idx_leaderboard_score ON leaderboard (score DESC);
-
-CREATE TABLE IF NOT EXISTS thing_leaderboard
-(
-    thing_name VARCHAR(64) PRIMARY KEY,
-    score      INTEGER   DEFAULT 0 NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_thing_leaderboard_score ON thing_leaderboard (score DESC);
-
-CREATE TABLE IF NOT EXISTS vote_history
-(
-    id            SERIAL PRIMARY KEY,
-    voter_id      VARCHAR(20) NOT NULL,
-    voted_user_id VARCHAR(20) NOT NULL,
-    vote_type     VARCHAR(2)  NOT NULL CHECK (vote_type IN ('++', '--')),
-    channel_id    VARCHAR(20),
-    message_ts    VARCHAR(20),
-    created_at    TIMESTAMP DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_vote_history_user ON vote_history (voted_user_id);
-CREATE INDEX IF NOT EXISTS idx_vote_history_created ON vote_history (created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_vote_history_channel_message ON vote_history (channel_id, message_ts);
-CREATE INDEX IF NOT EXISTS idx_vote_history_voter_created ON vote_history (voter_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_vote_history_channel_created ON vote_history (channel_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_vote_history_voter_target_created ON vote_history (voter_id, voted_user_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_vote_history_downvote_voter_created ON vote_history (vote_type, voter_id, created_at DESC);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_vote_history_dedupe
-    ON vote_history (voter_id, voted_user_id, channel_id, message_ts)
-    WHERE channel_id IS NOT NULL AND message_ts IS NOT NULL;
-
-CREATE TABLE IF NOT EXISTS message_dedupe
-(
-    id         SERIAL PRIMARY KEY,
-    channel_id VARCHAR(20),
-    message_ts VARCHAR(20),
-    dedupe_key VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE (channel_id, message_ts)
-);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_message_dedupe_key ON message_dedupe (dedupe_key);
-CREATE INDEX IF NOT EXISTS idx_message_dedupe_created ON message_dedupe (created_at DESC);
+```bash
+railway link
+railway up
 ```
 
-Alternatively, you can rely on the built-in migration runner:
+Confirm that `railway link` selects the intended project, environment, and service before uploading.
+After `railway up`, verify the deployment as below; on failure, inspect its build and runtime logs.
+
+## Database Schema
+
+Startup runs [the migration](../src/scripts/migrate.ts), which owns schema creation and upgrades.
+Do not maintain a separate copy of its SQL. To run it explicitly, export `DATABASE_URL` and the
+[database TLS settings](CONFIGURATION.md#database-tls-controls), then run:
 
 ```bash
 npm run migrate
 ```
 
-The application also runs migrations automatically on startup when `DATABASE_URL` is set.
+Expect `Migration complete`; investigate `Migration failed` before starting the bot.
+The schema contains `leaderboard`, `thing_leaderboard`, `vote_history`, and `message_dedupe`.
+Only user votes enter `vote_history`. Configure database backups in your hosting platform.
 
----
+## Verification
 
-## Environment Variables
+Expect `Database migrations complete` and `Slack bot is running` in runtime logs.
+With maintenance enabled, also expect `Maintenance cleanup complete` and the 12-hour schedule message.
+The bot has no HTTP health endpoint, so verify the deployment status, logs, and Slack behavior:
 
-Configure in Railway Dashboard → Variables:
-
-```bash
-# Slack Configuration
-SLACK_BOT_TOKEN=your-bot-token-here
-SLACK_APP_TOKEN=your-app-token-here
-SLACK_SIGNING_SECRET=your-signing-secret-here
-
-# Application Configuration
-NODE_ENV=production
-LOG_LEVEL=info
-DATABASE_URL=postgres://user:pass@host:5432/dbname
-PORT=3000
-DB_SSL_MODE=verify-full
-ALLOW_INSECURE_DB_SSL=false
-
-# Abuse controls (recommended defaults)
-ABUSE_ENFORCEMENT_MODE=enforce
-VOTE_MAX_TARGETS_PER_MESSAGE=5
-VOTE_RATE_USER_PER_MIN=12
-VOTE_RATE_CHANNEL_PER_MIN=60
-VOTE_PAIR_COOLDOWN_SECONDS=2
-VOTE_DAILY_DOWNVOTE_LIMIT=15
-
-# Data retention
-MAINTENANCE_ENABLED=true
-MAINTENANCE_DEDUPE_RETENTION_DAYS=14
-MAINTENANCE_VOTE_HISTORY_RETENTION_DAYS=365
-```
-
-Notes:
-
-- Railway provides `RAILWAY_PORT`; the app uses `PORT` or `RAILWAY_PORT`.
-- The app runs migrations automatically on startup when `DATABASE_URL` is set.
-- When using the Railway template, you'll be prompted for the Slack tokens during provisioning.
-- This repo currently relies on startup migrations; add a Railway pre-deploy migration step only if your team prefers explicit migration gating.
-- In production, prefer `DB_SSL_MODE=verify-full`.
-
----
-
-## Deployment
-
-### Automatic Deployment (Recommended)
-
-Railway automatically deploys when you push to `main`:
-
-```bash
-git add .
-git commit -m "Deploy to production"
-git push origin main
-```
-
-### Manual Deployment via CLI
-
-```bash
-railway link
-railway up
-railway logs
-```
-
----
-
-## Post-Deployment Verification
-
-### Test Bot in Slack
-
-```
+```text
+/help
 @user ++
 /leaderboard
-/score me
+/score
 ```
 
----
+Select another user's actual Slack mention for the vote. Expect a score response and that user's
+updated leaderboard entry. `/score` reports the command caller's score.
+If responses are missing, check the bot's channel membership, credentials, scopes, and subscriptions.
 
-## Health and Readiness
+## Diagnostics
 
-pp-bot runs in Slack Socket Mode and does not expose an HTTP health endpoint by default.
-Use Railway's deployment status and logs to verify readiness, or add a lightweight HTTP
-endpoint if you need external health checks.
-
-## Monitoring & Logging
-
-### View Logs
+For a linked Railway service:
 
 ```bash
 railway logs
-railway logs --follow
-railway logs | grep ERROR
+railway logs --build
 ```
 
-### Set Up Uptime Monitoring
+Runtime logs should show the verification messages above. Build logs should show successful compilation.
+For a database error, check reachability, `DATABASE_URL`, and the TLS configuration in the affected
+service environment. For repeated cleanup errors, follow the [security operations runbook](SECURITY-OPERATIONS.md).
+Use Railway's usage dashboard to monitor resources and billing.
 
-Use services like:
+## Rollback
 
-- UptimeRobot (free)
-- Better Uptime
-- Pingdom
-
-Monitor via the Railway deployment status page or add a lightweight health check if you expose one.
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**Database Connection Failed:**
-
-```bash
-# Verify DATABASE_URL
-railway variables | grep DATABASE_URL
-
-# Test connection
-railway run psql $DATABASE_URL -c "SELECT 1"
-```
-
-**Bot Not Responding:**
-
-- Verify Slack tokens are correct
-- Check bot has required permissions
-- Verify Socket Mode is enabled
-- Check logs: `railway logs`
-
----
-
-## Cost Optimization
-
-### Railway Free Tier
-
-- Railway plans and limits change over time; check current pricing/limits in the Railway dashboard.
-- Keep pool sizing modest for small instances.
-
-### Monitor Usage
-
-```bash
-railway stats
-```
-
-Or check Dashboard → Billing → Usage
-
----
-
-## Rollback Procedures
-
-### Via Dashboard
-
-1. Go to Deployments tab
-2. Select previous deployment
-3. Click "Rollback"
-
-### Via CLI
-
-```bash
-railway deployments
-railway rollback <deployment-id>
-```
-
----
-
-## Security Best Practices
-
-- Never commit `.env` files
-- Rotate secrets every 90 days
-- Use Railway's variable management
-- Use `DB_SSL_MODE=verify-full` for PostgreSQL
-- Keep `ALLOW_INSECURE_DB_SSL=false` in production unless explicitly troubleshooting
-- Enable GitHub secret scanning and push protection for this repository
-- Keep dependencies updated
-
----
+In Railway's Deployments tab, select the last known-good deployment and choose Rollback from its menu.
+Verify the restored deployment's logs and Slack commands. Rollback changes the application deployment;
+review database compatibility separately. If verification fails, use the diagnostics above.
+See [deployment actions](https://docs.railway.com/deployments/deployment-actions).
 
 ## Support
 
-- Railway Discord: https://discord.gg/railway
-- Documentation: https://docs.railway.app
-- GitHub Issues: https://github.com/stevencarpenter/pp-bot/issues
-
----
-
-**Deployment Checklist:**
-
-- [ ] Railway project created
-- [ ] GitHub repository connected
-- [ ] PostgreSQL database provisioned
-- [ ] Database schema created
-- [ ] Environment variables configured
-- [ ] Automatic deployments enabled
-- [ ] Deployments healthy in Railway
-- [ ] Bot responding in Slack
-- [ ] Monitoring set up
-- [ ] Backups configured
-
-**Congratulations! Your pp-bot is now deployed! 🚀**
+- [Railway documentation](https://docs.railway.app)
+- [Railway Discord](https://discord.gg/railway)
+- [pp-bot issues](https://github.com/stevencarpenter/pp-bot/issues)
