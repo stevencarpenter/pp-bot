@@ -1,7 +1,7 @@
 # Configuration Reference
 
-This document lists supported environment variables for pp-bot. Values are read from the process
-environment at startup.
+Configure pp-bot through process environment variables read at startup.
+For local `.env` loading, use the [quick start](../README.md#quick-start).
 
 ## Required
 
@@ -11,11 +11,11 @@ environment at startup.
 
 ## Runtime Basics
 
-- `DATABASE_URL` - PostgreSQL connection string for persistent storage
+- `DATABASE_URL` - PostgreSQL connection string, required for voting and leaderboards; no runtime in-memory fallback
 - `LOG_LEVEL` - `error` | `warn` | `info` | `debug` (defaults to `info` in production, `debug` otherwise)
 - `NODE_ENV` - `development` | `production` | `test` (defaults to `development`)
-- `PORT` - Port for the Socket Mode listener (defaults to `3000`)
-- `RAILWAY_PORT` - Railway-provided port; used if `PORT` is not set
+- `PORT` - Value passed to Bolt's `app.start()` (defaults to `3000`); does not enable an HTTP health endpoint
+- `RAILWAY_PORT` - Fallback value passed to `app.start()` if `PORT` is not set
 
 ## Database TLS Controls
 
@@ -30,7 +30,7 @@ environment at startup.
 
 - `ABUSE_ENFORCEMENT_MODE` - `monitor` | `enforce` (default: `enforce`)
   - `enforce`: violations are blocked.
-  - `monitor`: violations are logged as `wouldBlock` but requests still proceed.
+  - `monitor`: violations are logged but requests still proceed.
 - `VOTE_MAX_TARGETS_PER_MESSAGE` - Max unique targets in one message (default: `5`)
 - `VOTE_RATE_USER_PER_MIN` - Max accepted votes per user per minute (default: `12`)
 - `VOTE_RATE_CHANNEL_PER_MIN` - Max accepted votes per channel per minute (default: `60`)

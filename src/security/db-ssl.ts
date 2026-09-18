@@ -75,22 +75,10 @@ export function getDatabaseSslConfig(env: NodeJS.ProcessEnv = process.env): Data
     return { mode, ssl: false, ca, allowInsecure };
   }
 
-  if (mode === 'require') {
-    return {
-      mode,
-      ssl: {
-        rejectUnauthorized: false,
-        ...(ca ? { ca } : {}),
-      },
-      ca,
-      allowInsecure,
-    };
-  }
-
   return {
     mode,
     ssl: {
-      rejectUnauthorized: true,
+      rejectUnauthorized: mode === 'verify-full',
       ...(ca ? { ca } : {}),
     },
     ca,
