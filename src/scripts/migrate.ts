@@ -1,4 +1,3 @@
-#!/usr/bin/env ts-node
 import { Client, Pool } from 'pg';
 import logger from '../logger';
 import { assertSecureDbSslPolicy, getDatabaseSslConfig } from '../security/db-ssl';

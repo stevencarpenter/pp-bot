@@ -6,16 +6,15 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "start": "npm run build && node dist/index.js",
-    "migrate": "ts-node src/scripts/migrate.ts",
-    "test": "node --no-warnings ./node_modules/jest/bin/jest.js",
-    "test:coverage": "node --no-warnings ./node_modules/jest/bin/jest.js --coverage",
+    "migrate": "npm run build && node dist/scripts/migrate.js",
+    "test": "npm run test:build && node --experimental-vm-modules --no-warnings ./node_modules/jest/bin/jest.js",
+    "test:coverage": "npm test -- --coverage",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "db:up": "docker compose up -d postgres",
-    "db:down": "docker compose down",
-    "test:integration": "npm run build && npm run db:up && wait-on tcp:5433 && DATABASE_URL=postgres://ppbot:ppbot@localhost:5433/ppbot ts-node src/scripts/migrate.ts && DATABASE_URL=postgres://ppbot:ppbot@localhost:5433/ppbot node --no-warnings ./node_modules/jest/bin/jest.js src/__tests__/db.integration.test.ts --runInBand && npm run db:down",
+    "test:integration": "npm test -- db.integration.test.js --runInBand --coverage=false",
     "ci": "npm ci && npm run build && npm test",
-    "lock:regen": "rm -f package-lock.json && npm install --package-lock-only"
+    "lock:regen": "rm -f package-lock.json && npm install --package-lock-only",
+    "test:build": "node -e \"require('node:fs').rmSync('build/test', { recursive: true, force: true })\" && tsc --project tsconfig.test.json"
   },
   "keywords": [
     "slack",
@@ -37,12 +36,10 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^26.5.1",
     "@types/pg": "^8.23.1",
+    "babel-jest": "^30.5.1",
     "jest": "^30.5.0",
     "pg-mem": "^3.0.14",
     "prettier": "^3.9.6",
-    "ts-jest": "^29.4.12",
-    "ts-node": "^10.9.2",
-    "typescript": "^6.0.3",
-    "wait-on": "^9.1.0"
+    "typescript": "^7.0.2"
   }
 }
