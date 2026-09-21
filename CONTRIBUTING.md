@@ -23,7 +23,9 @@ npm test
 npm run format
 ```
 
-Tests live in `src/__tests__/`. Run one file with `npx jest src/__tests__/vote.test.ts`.
+Tests live in `src/__tests__/`. `npm test` compiles the application and tests with TypeScript 7, then runs Jest on the emitted JavaScript.
+Run one file with `npm test -- vote.test.js --coverage=false`.
+`npm run test:integration` runs the database integration suite against pg-mem.
 Coverage thresholds are defined in [jest.config.cjs](jest.config.cjs).
 Use `npm run format:fix` to apply Prettier formatting.
 

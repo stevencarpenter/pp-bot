@@ -1,16 +1,16 @@
 module.exports = {
   testEnvironment: 'node',
-  // Allow both .ts and .js tests for migration period
-  testMatch: ['**/?(*.)+(test).[jt]s?(x)'],
+  testMatch: ['<rootDir>/build/test/**/*.test.js'],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.json' }],
+    // Preserve jest.mock hoisting after TypeScript compilation.
+    '^.+\\.js$': 'babel-jest',
   },
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  moduleFileExtensions: ['js', 'json'],
   setupFiles: ['<rootDir>/jest.setup.cjs'],
   setupFilesAfterEnv: ['<rootDir>/jest.after-env.cjs'],
   collectCoverage: true,
-  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/index.ts', '!**/node_modules/**', '!dist/**'],
-  coverageReporters: ['text', 'text-summary', 'lcov'],
+  collectCoverageFrom: ['build/test/**/*.js', '!build/test/index.js', '!build/test/__tests__/**'],
+  coverageReporters: ['text', 'text-summary', 'lcov', 'json'],
   coverageDirectory: 'coverage',
   coverageThreshold: {
     global: {
