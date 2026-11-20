@@ -14,9 +14,10 @@ import * as database from '../storage/database';
 jest.mock('../scripts/migrate');
 const mockMigrate = migrate as jest.MockedFunction<typeof migrate>;
 
-// Mock the logger
+// Mock the default logger; keep the real named-logger helpers that the Bolt adapter uses
 jest.mock('../logger', () => ({
   __esModule: true,
+  ...jest.requireActual('../logger'),
   default: {
     info: jest.fn(),
     error: jest.fn(),

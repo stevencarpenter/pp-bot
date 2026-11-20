@@ -108,6 +108,20 @@ railway logs --build
 ```
 
 Runtime logs should show the verification messages above. Build logs should show successful compilation.
+
+### Log severity
+
+With `NODE_ENV=production`, pp-bot writes one JSON object per line (see `LOG_FORMAT` in the
+[configuration reference](CONFIGURATION.md)). Railway reads each record's `level` field, so warnings
+appear as warnings rather than errors, and attributes such as `logger` can be filtered with
+`@logger:bolt-app`. Bolt and the Socket Mode client log through the same logger. Their periodic
+`A pong wasn't received from the server` line is a `warn`: Socket Mode reconnects on its own, so treat
+it as a problem only when it repeats without a reconnect.
+
+The PostgreSQL service is not configured from this repository. PostgreSQL writes its server log to
+stderr, which Railway tags as `error` even for routine `LOG:` lines such as checkpoints. To quiet
+checkpoint lines, turn off `log_checkpoints` (on by default since PostgreSQL 15) on the database
+itself, for example `ALTER SYSTEM SET log_checkpoints = off;` followed by `SELECT pg_reload_conf();`.
 For a database error, check reachability, `DATABASE_URL`, and the TLS configuration in the affected
 service environment. For repeated cleanup errors, follow the [security operations runbook](SECURITY-OPERATIONS.md).
 Use Railway's usage dashboard to monitor resources and billing.

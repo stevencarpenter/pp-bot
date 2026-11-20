@@ -58,6 +58,18 @@ describe('environment security validation', () => {
     expect(() => validateEnv()).toThrow('Invalid MAX_VOTE_SCORE_DELTA');
   });
 
+  test('rejects an invalid LOG_FORMAT and defaults to json in production', () => {
+    setValidSlackEnv();
+    process.env.LOG_FORMAT = 'xml';
+    expect(() => validateEnv()).toThrow('Invalid LOG_FORMAT "xml". Expected one of: text, json.');
+
+    delete process.env.LOG_FORMAT;
+    process.env.NODE_ENV = 'production';
+    process.env.DB_SSL_MODE = 'disable';
+    process.env.ALLOW_INSECURE_DB_SSL = 'true';
+    expect(validateEnv().logFormat).toBe('json');
+  });
+
   test('accepts valid secure configuration', () => {
     setValidSlackEnv();
     process.env.DB_SSL_MODE = 'verify-full';
