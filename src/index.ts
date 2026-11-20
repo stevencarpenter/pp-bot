@@ -13,6 +13,7 @@ import { waitForDatabase } from './db';
 import { getPool } from './storage/pool';
 import migrate from './scripts/migrate';
 import logger from './logger';
+import { createBoltLogger } from './bolt-logger';
 import { validateEnv } from './env';
 import { createAbuseController } from './security/abuse-controls';
 import { resolveMessageDedupeKey } from './utils/dedupe';
@@ -33,6 +34,7 @@ export function createApp(): App {
     signingSecret: process.env.SLACK_SIGNING_SECRET,
     socketMode: true,
     appToken: process.env.SLACK_APP_TOKEN,
+    logger: createBoltLogger(),
     logLevel: {
       error: LogLevel.ERROR,
       warn: LogLevel.WARN,

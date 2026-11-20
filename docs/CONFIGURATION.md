@@ -13,6 +13,9 @@ For local `.env` loading, use the [quick start](../README.md#quick-start).
 
 - `DATABASE_URL` - PostgreSQL connection string, required for voting and leaderboards; no runtime in-memory fallback
 - `LOG_LEVEL` - `error` | `warn` | `info` | `debug` (defaults to `info` in production, `debug` otherwise)
+- `LOG_FORMAT` - `json` | `text` (defaults to `json` in production, `text` otherwise). `json` writes one
+  object per line with `timestamp`, `level` and `message`, which Railway reads as the log severity.
+  `error` and `warn` go to stderr, `info` and `debug` to stdout, in both formats.
 - `NODE_ENV` - `development` | `production` | `test` (defaults to `development`)
 - `PORT` - Value passed to Bolt's `app.start()` (defaults to `3000`); does not enable an HTTP health endpoint
 - `RAILWAY_PORT` - Fallback value passed to `app.start()` if `PORT` is not set

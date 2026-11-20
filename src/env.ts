@@ -1,4 +1,4 @@
-import { LogLevelName } from './logger';
+import { LOG_FORMATS, LogFormatName, LogLevelName } from './logger';
 import { getDatabaseSslConfig, assertSecureDbSslPolicy } from './security/db-ssl';
 import { getAbuseControlsConfig } from './security/abuse-controls';
 
@@ -21,6 +21,7 @@ type EnvValidationOptions = {
 
 type ValidatedEnv = {
   logLevel: LogLevelName;
+  logFormat: LogFormatName;
   nodeEnv: NodeEnvName;
 };
 
@@ -103,6 +104,14 @@ export function validateEnv(options: EnvValidationOptions = {}): ValidatedEnv {
     );
   }
 
+  const rawLogFormat = process.env.LOG_FORMAT || (nodeEnv === 'production' ? 'json' : 'text');
+  const logFormat = rawLogFormat.toLowerCase();
+  if (!LOG_FORMATS.includes(logFormat as LogFormatName)) {
+    errors.push(
+      `Invalid LOG_FORMAT "${process.env.LOG_FORMAT}". Expected one of: ${LOG_FORMATS.join(', ')}.`
+    );
+  }
+
   parseIntegerEnv(process.env, 'MAINTENANCE_DEDUPE_RETENTION_DAYS', 1, errors);
   parseIntegerEnv(process.env, 'MAINTENANCE_VOTE_HISTORY_RETENTION_DAYS', 1, errors);
   parseIntegerEnv(process.env, 'MAX_VOTE_SCORE_DELTA', 1, errors);
@@ -132,6 +141,7 @@ export function validateEnv(options: EnvValidationOptions = {}): ValidatedEnv {
 
   return {
     logLevel: logLevel as LogLevelName,
+    logFormat: logFormat as LogFormatName,
     nodeEnv: nodeEnv as NodeEnvName,
   };
 }
