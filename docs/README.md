@@ -2,6 +2,7 @@
 
 - [Quick start and usage](../README.md)
 - [Voting examples](EXAMPLES.md)
+- [Brand and design principles](BRANDING.md)
 - [Environment variables](CONFIGURATION.md)
 - [Slack setup and deployment](DEPLOYMENT.md)
 - [Production security baseline](SECURITY-HARDENING.md)

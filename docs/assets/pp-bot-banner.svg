@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">pp-bot</title>
+  <desc id="desc">A Slack bot for votes and leaderboards.</desc>
+  <rect width="1280" height="640" fill="#222326"/>
+  <path d="M0 0h1280v16H0z" fill="#bbc1c8"/>
+  <g transform="translate(100 154) scale(.58)">
+    <path d="M105 130h302v212H233l-78 55v-55h-50z" fill="#fafafa"/>
+    <path d="M167 219h68m-34-34v68m76-34h68m-34-34v68" fill="none" stroke="#383b42" stroke-width="25" stroke-linecap="square"/>
+    <path d="M313 342h94v-28h-94z" fill="#bbc1c8"/>
+  </g>
+  <text x="435" y="297" fill="#fafafa" font-family="Arial, sans-serif" font-size="132" font-weight="700" letter-spacing="-4">pp-bot</text>
+  <text x="441" y="363" fill="#d6d8db" font-family="Arial, sans-serif" font-size="29">Votes and leaderboards for Slack.</text>
+  <path d="M441 414h84" stroke="#bbc1c8" stroke-width="8"/>
+</svg>

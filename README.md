@@ -1,8 +1,8 @@
 # pp-bot
 
-A Slack Socket Mode bot with PostgreSQL leaderboards for `++`/`--` votes on users and things.
+![pp-bot: Votes and leaderboards for Slack](docs/assets/ppbot_github_1280x640.png)
 
-![pp-bot logo](docs/assets/ppbot_github_1280x640.png)
+A Slack Socket Mode bot with PostgreSQL leaderboards for `++`/`--` votes on people and things.
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/pp-bot)
 
@@ -67,7 +67,8 @@ The [threat model](pp-bot-threat-model.md) records the deployment assumptions an
 ## Contributing
 
 Run `npm run build`, `npm test`, and `npm run format` before submitting changes.
-See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md), the [brand and design principles](docs/BRANDING.md),
+and the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 Open [GitHub issues](https://github.com/stevencarpenter/pp-bot/issues) for support or feature requests.
 Report vulnerabilities privately through GitHub Security Advisories as described in [SECURITY.md](SECURITY.md).
