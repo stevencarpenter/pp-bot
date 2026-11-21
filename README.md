@@ -8,7 +8,7 @@ A Slack Socket Mode bot with PostgreSQL leaderboards for `++`/`--` votes on peop
 
 ## Quick Start
 
-Use Node.js 24, a PostgreSQL database, and a [configured Slack app](docs/DEPLOYMENT.md#slack-app-setup).
+Use the Node.js version in `.node-version`, the npm version in `package.json`, a PostgreSQL database, and a [configured Slack app](docs/DEPLOYMENT.md#slack-app-setup).
 From a checkout of this repository:
 
 ```bash
