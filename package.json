@@ -1,8 +1,9 @@
 {
   "name": "pp-bot",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "A Slack bot for ++ and -- votes and leaderboards for people and things",
   "main": "dist/index.js",
+  "packageManager": "npm@12.2.3",
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "start": "npm run build && node dist/index.js",

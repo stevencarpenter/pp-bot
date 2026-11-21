@@ -83,7 +83,7 @@ Four tables: `leaderboard` (user scores), `thing_leaderboard` (thing scores), `v
 
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) builds and runs tests with coverage on Node.js 24 and 25. The dependency scan runs `npm audit --omit=dev`.
+GitHub Actions (`.github/workflows/ci.yml`) builds and runs tests with coverage on Node.js 24 and 26. The dependency scan runs `npm audit --omit=dev`.
 
 ## Conventions
 

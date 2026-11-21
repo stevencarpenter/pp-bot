@@ -4,7 +4,7 @@ Keep changes focused and verify behavior before opening a pull request.
 
 ## Development Setup
 
-Use Node.js 24. Fork [pp-bot](https://github.com/stevencarpenter/pp-bot), then clone your fork:
+Use the Node.js version in `.node-version` and the npm version in `package.json`. Fork [pp-bot](https://github.com/stevencarpenter/pp-bot), then clone your fork:
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/pp-bot.git
